@@ -6,6 +6,7 @@ import LoginModal from './components/LoginModal';
 import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
 
+const CLIENT_ID = 'e6465fb0b2a444fd984014236bbe8c65';
 const REDIRECT_URI = window.location.origin;
 const SCOPES = [
   'streaming',
@@ -91,8 +92,8 @@ function App() {
   }, []);
 
   // ── Login: redirect to Spotify with PKCE ─────────────────────────────────
-  const login = async (clientId) => {
-    localStorage.setItem('spdj_client_id', clientId);
+  const login = async () => {
+    const clientId = CLIENT_ID;
     const verifier   = generateVerifier();
     const challenge  = await pkceChallenge(verifier);
     sessionStorage.setItem('spdj_verifier', verifier);
