@@ -11,6 +11,7 @@ export default function DJDashboard({
   onToggleA, onToggleB, onTransition, onCrossfaderChange,
   onLoadToDeck, onAddToSetlist, onRemoveFromSetlist, onMoveInSetlist,
   onSearch, onRecommend, onSavePlaylist,
+  onHorn, onTec, onDrop, onScratch,
 }) {
   return (
     <div className="dj-dashboard">
@@ -33,6 +34,10 @@ export default function DJDashboard({
           crossfader={crossfader}
           onCrossfaderChange={onCrossfaderChange}
           onTransition={onTransition}
+          onHorn={onHorn}
+          onTec={onTec}
+          onDrop={onDrop}
+          onScratch={onScratch}
         />
         <Deck
           label="DECK B" side="B"

@@ -14,7 +14,7 @@ function bpmCompat(bpmA, bpmB) {
   return              { label: 'INCOMP.',   color: '#ef4444' };
 }
 
-export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader, onCrossfaderChange, onTransition }) {
+export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader, onCrossfaderChange, onTransition, onHorn, onTec, onDrop, onScratch }) {
   const compat = bpmCompat(deckA?.bpm, deckB?.bpm);
 
   const [vuA, setVuA] = useState(3);
@@ -90,6 +90,13 @@ export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader,
       >
         ⇄ TRANSIÇÃO
       </button>
+
+      <div className="fx-pads">
+        <button className="fx-btn horn"    onClick={onHorn}    title="Air Horn">📯 HORN</button>
+        <button className="fx-btn tec"     onClick={onTec}     title="Click">⚡ TEC</button>
+        <button className="fx-btn drop"    onClick={onDrop}    title="Bass Drop">💥 DROP</button>
+        <button className="fx-btn scratch" onClick={onScratch} title="Scratch">🎚 SCRATCH</button>
+      </div>
     </div>
   );
 }

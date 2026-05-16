@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSoundFX } from './hooks/useSoundFX';
 import './styles/App.css';
 import Header from './components/Header';
 import LoginModal from './components/LoginModal';
@@ -48,6 +49,7 @@ function App() {
 
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
+  const { playHorn, playTec, playDrop, playScratch } = useSoundFX();
 
   // ── OAuth callback: exchange PKCE code for token ─────────────────────────
   useEffect(() => {
@@ -370,6 +372,7 @@ function App() {
     if (deck === 'A') setDeckA(track);
     else setDeckB(track);
     fetchRealBpm(track, deck);
+    playTec();
   };
 
   const addToSetlist = (track) => setSetlist(prev => prev.find(t => t.id === track.id) ? prev : [...prev, track]);
@@ -433,6 +436,10 @@ function App() {
           onSearch={searchTracks}
           onRecommend={getRecommendations}
           onSavePlaylist={savePlaylist}
+          onHorn={playHorn}
+          onTec={playTec}
+          onDrop={playDrop}
+          onScratch={playScratch}
         />
       )}
       <LoadingScreen show={isLoading} />
