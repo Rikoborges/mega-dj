@@ -5,7 +5,7 @@ import LoginModal from './components/LoginModal';
 import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
 
-const REDIRECT_URI = 'http://127.0.0.1:3000';
+const REDIRECT_URI = window.location.origin;
 const SCOPES = [
   'streaming',
   'user-read-email',
