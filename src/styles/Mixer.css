@@ -1,0 +1,152 @@
+.mixer {
+  background: #0a0a14;
+  border: 1px solid #1a1a2e;
+  border-radius: 14px;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.mixer-title {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.4em;
+  color: #333;
+}
+
+/* BPM display */
+.mixer-bpm-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+.mixer-bpm-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.mixer-bpm-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  line-height: 1;
+}
+.mixer-bpm-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #444;
+  letter-spacing: 0.1em;
+}
+.mixer-compat {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-align: center;
+  flex: 1;
+  transition: color 0.3s;
+}
+
+/* VU meter */
+.mixer-vu-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 80px;
+  width: 100%;
+  justify-content: center;
+}
+.vu-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+.vu-bar-wrap {
+  flex: 1;
+  width: 16px;
+  background: #111;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.vu-bar {
+  width: 100%;
+  background: linear-gradient(to top, #22c55e 0%, #f59e0b 60%, #ef4444 100%);
+  border-radius: 4px;
+  transition: height 0.1s ease-out;
+  min-height: 2px;
+}
+.vu-bar-b {
+  background: linear-gradient(to top, #3b82f6 0%, #8b5cf6 60%, #ef4444 100%);
+}
+.vu-label {
+  font-size: 0.6rem;
+  color: #444;
+  font-variant-numeric: tabular-nums;
+}
+.vu-divider {
+  width: 1px;
+  height: 60%;
+  background: #222;
+}
+
+/* Crossfader */
+.mixer-cf-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+.mixer-cf-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #333;
+}
+.mixer-cf-labels .cf-active { color: #f59e0b; }
+.crossfader {
+  width: 100%;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
+.mixer-cf-tag {
+  font-size: 0.5rem;
+  letter-spacing: 0.25em;
+  color: #2a2a3a;
+  font-weight: 700;
+}
+
+.transition-btn {
+  width: 100%;
+  padding: 0.55rem;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  color: #7c7caa;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.transition-btn:hover:not(:disabled) {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #000;
+}
+.transition-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

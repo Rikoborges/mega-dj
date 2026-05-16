@@ -1,0 +1,49 @@
+:root {
+  --primary: #22c55e;
+  --primary-dark: #16a34a;
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --surface-2: #252525;
+  --border: #333;
+  --text: #fff;
+  --text-muted: #888;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  margin: 0;
+}
+
+.app {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.app-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.player-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .player-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
+}
