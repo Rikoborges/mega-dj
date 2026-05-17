@@ -236,6 +236,15 @@ function App() {
     const track = deck === 'A' ? deckA : deckB;
     if (!track || !deviceId || !token) return;
 
+    // Transfer playback to our SDK device first (activates it for DRM)
+    await fetch('https://api.spotify.com/v1/me/player', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_ids: [deviceId], play: false }),
+    });
+
+    await new Promise(r => setTimeout(r, 300));
+
     const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
