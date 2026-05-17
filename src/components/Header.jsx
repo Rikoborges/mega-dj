@@ -6,12 +6,12 @@ export default function Header({ isAuthenticated, playerReady, onLogout }) {
     <header className="header">
       <div className="header-content">
         <div className="logo">
-          <svg className="logo-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="48" height="48" rx="10" fill="#0e0e18"/>
-            <path d="M9 28 Q9 14 24 14 Q39 14 39 28" stroke="#f59e0b" strokeWidth="3" fill="none" strokeLinecap="round"/>
-            <rect x="5" y="25" width="8" height="13" rx="4" fill="#f59e0b"/>
-            <rect x="35" y="25" width="8" height="13" rx="4" fill="#f59e0b"/>
-            <circle cx="24" cy="34" r="2.5" fill="#f59e0b" opacity="0.4"/>
+          <svg className="logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="64" height="64" rx="14" fill="#080810"/>
+            <path d="M12 36 Q12 18 32 18 Q52 18 52 36" stroke="#f59e0b" strokeWidth="4" fill="none" strokeLinecap="round"/>
+            <rect x="7" y="33" width="10" height="16" rx="5" fill="#f59e0b"/>
+            <rect x="47" y="33" width="10" height="16" rx="5" fill="#f59e0b"/>
+            <circle cx="32" cy="44" r="3" fill="#f59e0b" opacity="0.5"/>
           </svg>
           <div className="logo-text">
             <h1>MEGA DJ PRO</h1>

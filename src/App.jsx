@@ -7,6 +7,7 @@ import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
 
 const CLIENT_ID = 'e6465fb0b2a444fd984014236bbe8c65';
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const REDIRECT_URI = window.location.origin;
 const SCOPES = [
   'streaming',
@@ -419,6 +420,26 @@ function App() {
     } catch { alert('❌ Erro ao salvar playlist. Tente novamente.'); }
     finally { setIsLoading(false); }
   };
+
+  if (isMobile) {
+    return (
+      <div className="app">
+        <Header isAuthenticated={false} playerReady={false} onLogout={logout} />
+        <div className="mobile-block">
+          <svg viewBox="0 0 64 64" fill="none" width="72" height="72">
+            <rect width="64" height="64" rx="14" fill="#080810"/>
+            <path d="M12 36 Q12 18 32 18 Q52 18 52 36" stroke="#f59e0b" strokeWidth="4" fill="none" strokeLinecap="round"/>
+            <rect x="7" y="33" width="10" height="16" rx="5" fill="#f59e0b"/>
+            <rect x="47" y="33" width="10" height="16" rx="5" fill="#f59e0b"/>
+            <circle cx="32" cy="44" r="3" fill="#f59e0b" opacity="0.5"/>
+          </svg>
+          <h2>MEGA DJ PRO</h2>
+          <p>O Spotify Web Playback SDK não funciona em celular — é uma limitação do próprio Spotify.</p>
+          <p className="mobile-hint">Abra no <strong>computador</strong> para usar o dashboard completo.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
