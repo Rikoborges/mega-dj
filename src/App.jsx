@@ -7,7 +7,7 @@ import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
 
 const CLIENT_ID = 'e6465fb0b2a444fd984014236bbe8c65';
-const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isMobile = /iPhone|iPod|(Android.*Mobile)/i.test(navigator.userAgent);
 const REDIRECT_URI = window.location.origin;
 const SCOPES = [
   'streaming',
