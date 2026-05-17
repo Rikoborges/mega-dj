@@ -272,26 +272,29 @@ function App() {
     else await playDeck(deck);
   }, [activeDeck, isPlaying, pausePlayback, playDeck]);
 
-  // ── Auto-transition: animate crossfader then switch tracks ───────────────
-  const transition = useCallback(() => {
+  // ── Auto-transition: B starts immediately at low volume, crossfader blends ─
+  const transition = useCallback(async () => {
     const targetDeck = activeDeck === 'A' ? 'B' : 'A';
     const targetTrack = targetDeck === 'A' ? deckA : deckB;
     if (!targetTrack) { alert('Carregue uma música no outro deck primeiro!'); return; }
 
-    const startCF = crossfader;
-    const endCF = targetDeck === 'B' ? 95 : 5;
-    const steps = 40;
-    let step = 0;
+    // Start target deck right away, crossfader near source side (B at ~5% vol)
+    const startCF = targetDeck === 'B' ? 5 : 95;
+    const endCF   = targetDeck === 'B' ? 95 : 5;
+    setCrossfader(startCF);
 
-    const id = setInterval(async () => {
+    await playDeck(targetDeck);
+
+    // Animate crossfader over 5s (50 steps × 100ms)
+    const steps = 50;
+    let step = 0;
+    const id = setInterval(() => {
       step++;
-      setCrossfader(Math.round(startCF + (endCF - startCF) * (step / steps)));
-      if (step >= steps) {
-        clearInterval(id);
-        await playDeck(targetDeck);
-      }
+      const eased = step / steps; // linear — feels natural for DJ mix
+      setCrossfader(Math.round(startCF + (endCF - startCF) * eased));
+      if (step >= steps) clearInterval(id);
     }, 100);
-  }, [activeDeck, crossfader, deckA, deckB, playDeck]);
+  }, [activeDeck, deckA, deckB, playDeck]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
