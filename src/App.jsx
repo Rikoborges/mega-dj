@@ -59,7 +59,7 @@ function App() {
 
     if (code) {
       const verifier  = sessionStorage.getItem('spdj_verifier');
-      const clientId  = localStorage.getItem('spdj_client_id');
+      const clientId  = CLIENT_ID;
       window.history.replaceState(null, '', '/');
 
       fetch('https://accounts.spotify.com/api/token', {
@@ -114,8 +114,8 @@ function App() {
     if (!token) return;
     const id = setInterval(async () => {
       const refresh  = localStorage.getItem('spdj_refresh');
-      const clientId = localStorage.getItem('spdj_client_id');
-      if (!refresh || !clientId) return;
+      if (!refresh) return;
+      const clientId = CLIENT_ID;
       try {
         const res = await fetch('https://accounts.spotify.com/api/token', {
           method: 'POST',
