@@ -7,6 +7,8 @@ import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
 
 const CLIENT_ID = 'e6465fb0b2a444fd984014236bbe8c65';
+
+const sCurve = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
 const isMobile = /iPhone|iPod|(Android.*Mobile)/i.test(navigator.userAgent);
 const REDIRECT_URI = window.location.origin;
 const SCOPES = [
@@ -277,9 +279,6 @@ function App() {
     else await playDeck(deck);
   }, [activeDeck, isPlaying, pausePlayback, playDeck]);
 
-  // ── S-curve easing (cosine) ───────────────────────────────────────────────
-  const sCurve = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
-
   // ── Cancel in-flight transition ───────────────────────────────────────────
   const cancelTransition = useCallback(() => {
     abortTransitionRef.current = true;
@@ -359,7 +358,7 @@ function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeDeck, toggleDeck, transition]);
+  }, [activeDeck, toggleDeck, transition, cancelTransition]);
 
   // ── Track search ──────────────────────────────────────────────────────────
   const mapTrack = (t, bpm) => ({
