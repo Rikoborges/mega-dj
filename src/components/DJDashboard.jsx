@@ -8,7 +8,8 @@ import SetlistQueue from './SetlistQueue';
 export default function DJDashboard({
   deckA, deckB, activeDeck, isPlaying, progress, crossfader,
   library, setlist, isLoading, playerReady,
-  onToggleA, onToggleB, onTransition, onCrossfaderChange,
+  onToggleA, onToggleB, onTransition, onCancelTransition, onCrossfaderChange,
+  isTransitioning, transitionProgress, transitionDuration, onTransitionDurationChange,
   onLoadToDeck, onAddToSetlist, onRemoveFromSetlist, onMoveInSetlist,
   onSearch, onRecommend, onSavePlaylist,
   onHorn, onTec, onDrop, onScratch, onRiser, onSiren, onClap, onRewind,
@@ -34,6 +35,11 @@ export default function DJDashboard({
           crossfader={crossfader}
           onCrossfaderChange={onCrossfaderChange}
           onTransition={onTransition}
+          onCancelTransition={onCancelTransition}
+          isTransitioning={isTransitioning}
+          transitionProgress={transitionProgress}
+          transitionDuration={transitionDuration}
+          onTransitionDurationChange={onTransitionDurationChange}
           onHorn={onHorn}
           onTec={onTec}
           onDrop={onDrop}

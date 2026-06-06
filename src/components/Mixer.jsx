@@ -14,7 +14,18 @@ function bpmCompat(bpmA, bpmB) {
   return              { label: 'INCOMP.',   color: '#ef4444' };
 }
 
-export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader, onCrossfaderChange, onTransition, onHorn, onTec, onDrop, onScratch, onRiser, onSiren, onClap, onRewind }) {
+const SPEEDS = [
+  { label: '⚡ 5s',  value: 5  },
+  { label: '🎛 20s', value: 20 },
+  { label: '🌊 40s', value: 40 },
+];
+
+export default function Mixer({
+  deckA, deckB, activeDeck, isPlaying, crossfader, onCrossfaderChange,
+  onTransition, onCancelTransition,
+  isTransitioning, transitionProgress, transitionDuration, onTransitionDurationChange,
+  onHorn, onTec, onDrop, onScratch, onRiser, onSiren, onClap, onRewind,
+}) {
   const compat = bpmCompat(deckA?.bpm, deckB?.bpm);
 
   const [vuA, setVuA] = useState(3);
@@ -82,14 +93,43 @@ export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader,
         <div className="mixer-cf-tag">CROSSFADER</div>
       </div>
 
-      <button
-        className="transition-btn"
-        onClick={onTransition}
-        disabled={!canTransition}
-        title={canTransition ? 'Transição automática entre decks' : 'Carregue os dois decks'}
-      >
-        ⇄ TRANSIÇÃO
-      </button>
+      <div className="transition-section">
+        <div className="speed-row">
+          {SPEEDS.map(s => (
+            <button
+              key={s.value}
+              className={`speed-btn ${transitionDuration === s.value ? 'speed-active' : ''}`}
+              onClick={() => onTransitionDurationChange(s.value)}
+              disabled={isTransitioning}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {isTransitioning ? (
+          <div className="transition-active">
+            <div className="transition-phase-label">
+              {transitionProgress < 50 ? '↓ SAÍDA' : '↑ ENTRADA'}
+            </div>
+            <div className="transition-bar-wrap">
+              <div className="transition-bar-fill" style={{ width: `${transitionProgress}%` }} />
+            </div>
+            <button className="cancel-btn" onClick={onCancelTransition} title="Cancelar (Esc)">
+              ✕ PARAR
+            </button>
+          </div>
+        ) : (
+          <button
+            className="transition-btn"
+            onClick={onTransition}
+            disabled={!canTransition}
+            title={canTransition ? 'Transição suave entre decks' : 'Carregue os dois decks'}
+          >
+            ⇄ TRANSIÇÃO
+          </button>
+        )}
+      </div>
 
       <div className="fx-pads">
         <button className="fx-btn horn"    onClick={onHorn}    title="Air Horn">📯 HORN</button>
