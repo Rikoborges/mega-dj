@@ -14,19 +14,75 @@ const GENRES = [
   { label: 'Pagode',     query: 'pagode brasileiro',           bpm: 100 },
 ];
 
-const RADIO_BR = [
-  { label: '🔥 Top Agora',    query: 'top brasil 2025 mais tocadas radio',     bpm: 120 },
-  { label: '📻 Funk Pop',     query: 'funk pop ostentacao brasil 2025',         bpm: 135 },
-  { label: '🤠 Sertanejo',    query: 'sertanejo universitario top 2025',        bpm: 105 },
-  { label: '🥁 Pagode Novo',  query: 'pagode novo 2025 mais tocado',            bpm: 100 },
-  { label: '🌟 Pop BR',       query: 'pop brasileiro 2025 hits radio',          bpm: 115 },
-  { label: '💃 Forró',        query: 'forro eletronico hits 2025',              bpm: 128 },
-  { label: '🎵 Arrocha',      query: 'arrocha romantico mais tocado 2025',      bpm: 72  },
-  { label: '🌊 Piseiro',      query: 'piseiro eletronico hits 2025',            bpm: 132 },
-  { label: '🎤 Brega Funk',   query: 'brega funk pernambuco hits 2025',         bpm: 130 },
-  { label: '📱 Viral BR',     query: 'musicas virais brasil tiktok 2025',       bpm: 118 },
-  { label: '🏖 Axé',          query: 'axe musica bahia hits 2025',              bpm: 130 },
-  { label: '🎸 Samba Rock',   query: 'samba rock nacional hits',                bpm: 95  },
+const RADIO_WORLD = [
+  {
+    region: '🇧🇷 BRASIL',
+    stations: [
+      { label: '🔥 Top Agora',   query: 'top brasil 2025 mais tocadas radio',   bpm: 120 },
+      { label: '📻 Funk Pop',    query: 'funk pop ostentacao brasil 2025',       bpm: 135 },
+      { label: '🤠 Sertanejo',   query: 'sertanejo universitario top 2025',      bpm: 105 },
+      { label: '🥁 Pagode',      query: 'pagode novo 2025 mais tocado',          bpm: 100 },
+      { label: '💃 Forró',       query: 'forro eletronico hits 2025',            bpm: 128 },
+      { label: '🎵 Arrocha',     query: 'arrocha romantico mais tocado 2025',    bpm: 72  },
+      { label: '🌊 Piseiro',     query: 'piseiro eletronico hits 2025',          bpm: 132 },
+      { label: '🎤 Brega Funk',  query: 'brega funk pernambuco hits 2025',       bpm: 130 },
+      { label: '🏖 Axé',         query: 'axe musica bahia hits 2025',            bpm: 130 },
+    ],
+  },
+  {
+    region: '🌐 GLOBAL',
+    stations: [
+      { label: '🌍 Top Mundial', query: 'top global hits 2025 worldwide chart',  bpm: 120 },
+      { label: '🇺🇸 USA Pop',    query: 'usa top 40 pop hits 2025',              bpm: 118 },
+      { label: '🇬🇧 UK Charts',  query: 'uk top charts hits 2025',               bpm: 122 },
+      { label: '📱 Viral Global',query: 'viral global tiktok 2025 trending',     bpm: 115 },
+      { label: '🎤 R&B Soul',    query: 'rnb soul hits 2025 global',             bpm: 90  },
+      { label: '🎸 Pop Rock',    query: 'pop rock alternative hits 2025',        bpm: 130 },
+    ],
+  },
+  {
+    region: '🌎 LATINA',
+    stations: [
+      { label: '🇵🇷 Reggaeton',  query: 'reggaeton hits 2025 bad bunny',         bpm: 96  },
+      { label: '🇲🇽 México',     query: 'corridos tumbados musica mexicana 2025', bpm: 110 },
+      { label: '🇨🇴 Colombia',   query: 'musica colombiana vallenato hits 2025', bpm: 108 },
+      { label: '🇦🇷 Argentina',  query: 'musica argentina cumbia pop 2025',      bpm: 110 },
+      { label: '🇨🇺 Salsa',      query: 'salsa timba cubana hits 2025',          bpm: 185 },
+      { label: '🌎 Latin Pop',   query: 'latin pop hits 2025 shakira',           bpm: 112 },
+      { label: '🪗 Cumbia',      query: 'cumbia latina hits 2025',               bpm: 120 },
+    ],
+  },
+  {
+    region: '🌍 EUROPA',
+    stations: [
+      { label: '🇪🇸 España',     query: 'musica espanola pop hits 2025',         bpm: 115 },
+      { label: '🇫🇷 France',     query: 'french pop musique hits 2025',          bpm: 120 },
+      { label: '🇩🇪 Germany',    query: 'german techno electronic hits 2025',    bpm: 138 },
+      { label: '🇮🇹 Italia',     query: 'musica italiana pop hits 2025',         bpm: 118 },
+      { label: '🇵🇹 Portugal',   query: 'musica portuguesa fado pop 2025',       bpm: 100 },
+      { label: '🏠 Euro Dance',  query: 'eurodance electronic dance hits 2025',  bpm: 135 },
+    ],
+  },
+  {
+    region: '🌍 ÁFRICA & CARIBE',
+    stations: [
+      { label: '🇳🇬 Afrobeats',  query: 'afrobeats nigeria hits 2025 wizkid',   bpm: 100 },
+      { label: '🇿🇦 Amapiano',   query: 'amapiano south africa hits 2025',       bpm: 112 },
+      { label: '🇯🇲 Dancehall',  query: 'dancehall reggae jamaica hits 2025',    bpm: 90  },
+      { label: '🌍 Afro Pop',    query: 'afropop africa hits 2025',              bpm: 105 },
+      { label: '🌴 Zouk',        query: 'zouk kizomba hits 2025',               bpm: 80  },
+    ],
+  },
+  {
+    region: '🌏 ÁSIA',
+    stations: [
+      { label: '🇰🇷 K-Pop',      query: 'kpop hits 2025 bts blackpink stray kids', bpm: 128 },
+      { label: '🇯🇵 J-Pop',      query: 'jpop japanese hits 2025',              bpm: 122 },
+      { label: '🇮🇳 Bollywood',  query: 'bollywood hindi hits 2025',            bpm: 110 },
+      { label: '🇨🇳 C-Pop',      query: 'cpop mandopop chinese hits 2025',      bpm: 118 },
+      { label: '🇹🇷 Türkiye',    query: 'turkish pop muzik hits 2025',          bpm: 115 },
+    ],
+  },
 ];
 
 function bpmBadge(trackBpm, refBpm) {
@@ -83,7 +139,7 @@ export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch
           className={`lib-tab ${tab === 'radio' ? 'lib-tab-active' : ''}`}
           onClick={() => setTab('radio')}
         >
-          📻 RÁDIO BR
+          🌍 RÁDIO MUNDIAL
         </button>
       </div>
 
@@ -98,12 +154,18 @@ export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch
       )}
 
       {tab === 'radio' && (
-        <div className="library-genres library-radio">
-          <div className="radio-label">Mais tocadas nas rádios brasileiras</div>
-          {RADIO_BR.map(r => (
-            <button key={r.query} className="genre-chip radio-chip" onClick={() => handleChip(r)}>
-              {r.label}
-            </button>
+        <div className="library-radio-scroll">
+          {RADIO_WORLD.map(group => (
+            <div key={group.region} className="radio-group">
+              <div className="radio-region-label">{group.region}</div>
+              <div className="radio-chips">
+                {group.stations.map(r => (
+                  <button key={r.query} className="genre-chip radio-chip" onClick={() => handleChip(r)}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
