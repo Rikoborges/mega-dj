@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSoundFX } from './hooks/useSoundFX';
+import { toCamelot } from './utils/camelot';
 import './styles/App.css';
 import Header from './components/Header';
 import LoginModal from './components/LoginModal';
@@ -49,6 +50,7 @@ function App() {
 
   const [library, setLibrary] = useState([]);
   const [setlist, setSetlist] = useState([]);
+  const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -243,6 +245,7 @@ function App() {
   const playDeck = useCallback(async (deck) => {
     const track = deck === 'A' ? deckA : deckB;
     if (!track || !deviceId || !token) return;
+    setHistory(prev => [{ track, deck, playedAt: Date.now() }, ...prev].slice(0, 50));
 
     // Transfer playback to our SDK device first (activates it for DRM)
     await fetch('https://api.spotify.com/v1/me/player', {
@@ -483,7 +486,15 @@ function App() {
       });
       if (!res.ok) return;
       const f = await res.json();
-      const updated = { ...track, bpm: Math.round(f.tempo), energy: f.energy, danceability: f.danceability };
+      const updated = {
+        ...track,
+        bpm: Math.round(f.tempo),
+        energy: f.energy,
+        danceability: f.danceability,
+        key: f.key,
+        mode: f.mode,
+        camelot: toCamelot(f.key, f.mode),
+      };
       if (deck === 'A') setDeckA(prev => prev?.id === track.id ? updated : prev);
       else setDeckB(prev => prev?.id === track.id ? updated : prev);
     } catch { /* use estimated */ }
@@ -495,6 +506,11 @@ function App() {
     fetchRealBpm(track, deck);
     playTec();
   };
+
+  const updateDeckBpm = useCallback((deck, bpm) => {
+    if (deck === 'A') setDeckA(prev => prev ? { ...prev, bpm } : prev);
+    else setDeckB(prev => prev ? { ...prev, bpm } : prev);
+  }, []);
 
   const addToSetlist = (track) => setSetlist(prev => prev.find(t => t.id === track.id) ? prev : [...prev, track]);
   const removeFromSetlist = (id) => setSetlist(prev => prev.filter(t => t.id !== id));
@@ -579,9 +595,11 @@ function App() {
           onAddToSetlist={addToSetlist}
           onRemoveFromSetlist={removeFromSetlist}
           onMoveInSetlist={moveInSetlist}
+          history={history}
           onSearch={searchTracks}
           onRecommend={getRecommendations}
           onSavePlaylist={savePlaylist}
+          onBpmChange={updateDeckBpm}
           onHorn={playHorn}
           onTec={playTec}
           onDrop={playDrop}

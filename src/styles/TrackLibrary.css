@@ -94,6 +94,8 @@
 .lib-artist { font-size: 0.72rem; color: #555; margin-top: 1px; }
 .lib-bpm { font-size: 0.68rem; color: #f59e0b; font-weight: 700; margin-top: 2px; }
 .lib-pop { color: #888; font-weight: 400; }
+.hist-deck { color: #f59e0b; font-weight: 700; font-size: 0.65rem; }
+.hist-time { color: #444; }
 .lib-no-preview { color: #333; font-weight: 400; }
 
 .lib-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }

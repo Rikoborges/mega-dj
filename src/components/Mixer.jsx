@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { keyCompat } from '../utils/camelot';
 import '../styles/Mixer.css';
 
 function bpmCompat(bpmA, bpmB) {
@@ -26,7 +27,8 @@ export default function Mixer({
   isTransitioning, transitionProgress, transitionDuration, onTransitionDurationChange,
   onHorn, onTec, onDrop, onScratch, onRiser, onSiren, onClap, onRewind,
 }) {
-  const compat = bpmCompat(deckA?.bpm, deckB?.bpm);
+  const compat    = bpmCompat(deckA?.bpm, deckB?.bpm);
+  const keyCompat_ = keyCompat(deckA?.camelot, deckB?.camelot);
 
   const [vuA, setVuA] = useState(3);
   const [vuB, setVuB] = useState(3);
@@ -62,6 +64,20 @@ export default function Mixer({
           <span className="mixer-bpm-tag">B</span>
         </div>
       </div>
+
+      {(deckA?.camelot || deckB?.camelot) && (
+        <div className="mixer-key-row">
+          <span className={`mixer-cam mixer-cam-${deckA?.camelot?.endsWith('B') ? 'maj' : 'min'}`}>
+            {deckA?.camelot ?? '—'}
+          </span>
+          <span className="mixer-key-compat" style={{ color: keyCompat_?.color ?? '#333' }}>
+            {keyCompat_?.label ?? '·'}
+          </span>
+          <span className={`mixer-cam mixer-cam-${deckB?.camelot?.endsWith('B') ? 'maj' : 'min'}`}>
+            {deckB?.camelot ?? '—'}
+          </span>
+        </div>
+      )}
 
       <div className="mixer-vu-row">
         <div className="vu-col">
