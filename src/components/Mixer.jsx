@@ -110,7 +110,9 @@ export default function Mixer({
         {isTransitioning ? (
           <div className="transition-active">
             <div className="transition-phase-label">
-              {transitionProgress < 50 ? '↓ SAÍDA' : '↑ ENTRADA'}
+              {transitionProgress < 80
+                ? transitionProgress < 46 ? '↓ SAÍDA' : '⇄ MIX'
+                : '↑ SWAP'}
             </div>
             <div className="transition-bar-wrap">
               <div className="transition-bar-fill" style={{ width: `${transitionProgress}%` }} />
