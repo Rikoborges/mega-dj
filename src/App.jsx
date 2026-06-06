@@ -7,6 +7,8 @@ import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
 
 const CLIENT_ID = 'e6465fb0b2a444fd984014236bbe8c65';
+
+const sCurve = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
 const isMobile = /iPhone|iPod|(Android.*Mobile)/i.test(navigator.userAgent);
 const REDIRECT_URI = window.location.origin;
 const SCOPES = [
@@ -49,8 +51,14 @@ function App() {
   const [setlist, setSetlist] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionProgress, setTransitionProgress] = useState(0);
+  const [transitionDuration, setTransitionDuration] = useState(20);
+
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
+  const isTransitioningRef = useRef(false);
+  const abortTransitionRef = useRef(false);
   const { playHorn, playTec, playDrop, playScratch, playRiser, playSiren, playClap, playRewind } = useSoundFX();
 
   // ── OAuth callback: exchange PKCE code for token ─────────────────────────
@@ -220,10 +228,9 @@ function App() {
     return () => clearInterval(progressIntervalRef.current);
   }, [isPlaying]);
 
-  // ── Crossfader controls volume ────────────────────────────────────────────
+  // ── Crossfader controls volume (bypassed during transition) ──────────────
   useEffect(() => {
-    if (!playerRef.current) return;
-    // A side = left (0), B side = right (100)
+    if (!playerRef.current || isTransitioningRef.current) return;
     const vol = activeDeck === 'A'
       ? (100 - crossfader) / 100
       : activeDeck === 'B'
@@ -272,29 +279,70 @@ function App() {
     else await playDeck(deck);
   }, [activeDeck, isPlaying, pausePlayback, playDeck]);
 
-  // ── Auto-transition: B starts immediately at low volume, crossfader blends ─
+  // ── Cancel in-flight transition ───────────────────────────────────────────
+  const cancelTransition = useCallback(() => {
+    abortTransitionRef.current = true;
+  }, []);
+
+  // ── Auto-transition: fade A out → switch → fade B in ─────────────────────
   const transition = useCallback(async () => {
     const targetDeck = activeDeck === 'A' ? 'B' : 'A';
     const targetTrack = targetDeck === 'A' ? deckA : deckB;
     if (!targetTrack) { alert('Carregue uma música no outro deck primeiro!'); return; }
+    if (isTransitioningRef.current) return;
 
-    // Start target deck right away, crossfader near source side (B at ~5% vol)
-    const startCF = targetDeck === 'B' ? 5 : 95;
-    const endCF   = targetDeck === 'B' ? 95 : 5;
-    setCrossfader(startCF);
+    const totalMs     = transitionDuration * 1000;
+    const fadeOutMs   = totalMs * 0.45;
+    const fadeInMs    = totalMs * 0.55;
+    const STEPS       = 60;
 
+    isTransitioningRef.current = true;
+    abortTransitionRef.current = false;
+    setIsTransitioning(true);
+
+    // Current volume before we take control
+    const startVol = activeDeck === 'A'
+      ? Math.max(0.05, (100 - crossfader) / 100)
+      : Math.max(0.05, crossfader / 100);
+
+    // ── Phase 1: Fade out current track ────────────────────────────────────
+    const stepOutMs = fadeOutMs / STEPS;
+    for (let i = 1; i <= STEPS; i++) {
+      if (abortTransitionRef.current) {
+        playerRef.current?.setVolume(startVol);
+        isTransitioningRef.current = false;
+        setIsTransitioning(false);
+        setTransitionProgress(0);
+        return;
+      }
+      const vol = startVol * (1 - sCurve(i / STEPS));
+      playerRef.current?.setVolume(Math.max(0.001, vol));
+      setTransitionProgress(Math.round((i / STEPS) * 46));
+      await new Promise(r => setTimeout(r, stepOutMs));
+    }
+
+    // ── Switch track at silence ─────────────────────────────────────────────
+    setTransitionProgress(50);
     await playDeck(targetDeck);
+    playerRef.current?.setVolume(0.001);
 
-    // Animate crossfader over 5s (50 steps × 100ms)
-    const steps = 50;
-    let step = 0;
-    const id = setInterval(() => {
-      step++;
-      const eased = step / steps; // linear — feels natural for DJ mix
-      setCrossfader(Math.round(startCF + (endCF - startCF) * eased));
-      if (step >= steps) clearInterval(id);
-    }, 100);
-  }, [activeDeck, deckA, deckB, playDeck]);
+    // ── Phase 2: Fade in new track ──────────────────────────────────────────
+    const stepInMs = fadeInMs / STEPS;
+    for (let i = 1; i <= STEPS; i++) {
+      if (abortTransitionRef.current) break;
+      const vol = sCurve(i / STEPS) * 0.85;
+      playerRef.current?.setVolume(Math.max(0.001, vol));
+      setTransitionProgress(50 + Math.round((i / STEPS) * 50));
+      await new Promise(r => setTimeout(r, stepInMs));
+    }
+
+    // Restore crossfader position to match the new active deck
+    setCrossfader(targetDeck === 'B' ? 95 : 5);
+    isTransitioningRef.current = false;
+    abortTransitionRef.current = false;
+    setIsTransitioning(false);
+    setTransitionProgress(0);
+  }, [activeDeck, deckA, deckB, crossfader, transitionDuration, playDeck]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -304,12 +352,13 @@ function App() {
       else if (e.key === 'q' || e.key === 'Q') toggleDeck('A');
       else if (e.key === 'w' || e.key === 'W') toggleDeck('B');
       else if (e.key === 't' || e.key === 'T') transition();
+      else if (e.key === 'Escape')             cancelTransition();
       else if (e.key === 'ArrowLeft')          setCrossfader(v => Math.max(0,   v - 5));
       else if (e.key === 'ArrowRight')         setCrossfader(v => Math.min(100, v + 5));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeDeck, toggleDeck, transition]);
+  }, [activeDeck, toggleDeck, transition, cancelTransition]);
 
   // ── Track search ──────────────────────────────────────────────────────────
   const mapTrack = (t, bpm) => ({
@@ -462,7 +511,12 @@ function App() {
           onToggleA={() => toggleDeck('A')}
           onToggleB={() => toggleDeck('B')}
           onTransition={transition}
+          onCancelTransition={cancelTransition}
           onCrossfaderChange={setCrossfader}
+          isTransitioning={isTransitioning}
+          transitionProgress={transitionProgress}
+          transitionDuration={transitionDuration}
+          onTransitionDurationChange={setTransitionDuration}
           onLoadToDeck={loadToDeck}
           onAddToSetlist={addToSetlist}
           onRemoveFromSetlist={removeFromSetlist}
