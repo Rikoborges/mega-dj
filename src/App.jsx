@@ -51,7 +51,7 @@ function App() {
 
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
-  const { playHorn, playTec, playDrop, playScratch } = useSoundFX();
+  const { playHorn, playTec, playDrop, playScratch, playRiser, playSiren, playClap, playRewind } = useSoundFX();
 
   // ── OAuth callback: exchange PKCE code for token ─────────────────────────
   useEffect(() => {
@@ -474,6 +474,10 @@ function App() {
           onTec={playTec}
           onDrop={playDrop}
           onScratch={playScratch}
+          onRiser={playRiser}
+          onSiren={playSiren}
+          onClap={playClap}
+          onRewind={playRewind}
         />
       )}
       <LoadingScreen show={isLoading} />

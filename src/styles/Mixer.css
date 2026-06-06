@@ -56,10 +56,14 @@
   text-align: center;
 }
 .fx-btn:active { transform: scale(0.93); }
-.fx-btn.horn:hover  { background: #dc2626; border-color: #dc2626; color: #fff; }
-.fx-btn.tec:hover   { background: #7c3aed; border-color: #7c3aed; color: #fff; }
-.fx-btn.drop:hover  { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+.fx-btn.horn:hover    { background: #dc2626; border-color: #dc2626; color: #fff; }
+.fx-btn.tec:hover     { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.fx-btn.drop:hover    { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
 .fx-btn.scratch:hover { background: #047857; border-color: #047857; color: #fff; }
+.fx-btn.riser:hover   { background: #ea580c; border-color: #ea580c; color: #fff; }
+.fx-btn.siren:hover   { background: #be123c; border-color: #be123c; color: #fff; }
+.fx-btn.clap:hover    { background: #0e7490; border-color: #0e7490; color: #fff; }
+.fx-btn.rewind:hover  { background: #4338ca; border-color: #4338ca; color: #fff; }
 
 /* ── Responsive: horizontal mode ───────────────────────────── */
 @media (max-width: 1100px) {
