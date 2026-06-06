@@ -7,11 +7,11 @@ import SetlistQueue from './SetlistQueue';
 
 export default function DJDashboard({
   deckA, deckB, activeDeck, isPlaying, progress, crossfader,
-  library, setlist, isLoading, playerReady,
+  library, setlist, history, isLoading, playerReady,
   onToggleA, onToggleB, onTransition, onCancelTransition, onCrossfaderChange,
   isTransitioning, transitionProgress, transitionDuration, onTransitionDurationChange,
   onLoadToDeck, onAddToSetlist, onRemoveFromSetlist, onMoveInSetlist,
-  onSearch, onRecommend, onSavePlaylist,
+  onSearch, onRecommend, onSavePlaylist, onBpmChange,
   onHorn, onTec, onDrop, onScratch, onRiser, onSiren, onClap, onRewind,
 }) {
   return (
@@ -27,6 +27,7 @@ export default function DJDashboard({
           onTogglePlay={onToggleA}
           onAddToSetlist={onAddToSetlist}
           onRecommend={onRecommend}
+          onBpmChange={(bpm) => onBpmChange('A', bpm)}
         />
         <Mixer
           deckA={deckA} deckB={deckB}
@@ -59,12 +60,14 @@ export default function DJDashboard({
           onTogglePlay={onToggleB}
           onAddToSetlist={onAddToSetlist}
           onRecommend={onRecommend}
+          onBpmChange={(bpm) => onBpmChange('B', bpm)}
         />
       </div>
 
       <div className="bottom-row">
         <TrackLibrary
           tracks={library}
+          history={history}
           isLoading={isLoading}
           deckA={deckA} deckB={deckB}
           onSearch={onSearch}

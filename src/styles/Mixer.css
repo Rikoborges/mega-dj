@@ -18,6 +18,13 @@
 .mixer-bpm-tag { font-size: 0.58rem; font-weight: 700; color: #444; letter-spacing: 0.1em; }
 .mixer-compat { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.05em; text-align: center; flex: 1; transition: color 0.3s; }
 
+/* Key row */
+.mixer-key-row { display: flex; align-items: center; gap: 0.4rem; width: 100%; justify-content: center; }
+.mixer-cam { font-size: 1rem; font-weight: 900; min-width: 32px; text-align: center; }
+.mixer-cam-maj { color: #f59e0b; }
+.mixer-cam-min { color: #a78bfa; }
+.mixer-key-compat { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.04em; text-align: center; flex: 1; transition: color 0.3s; }
+
 /* VU meter */
 .mixer-vu-row { display: flex; gap: 6px; align-items: center; height: 70px; width: 100%; justify-content: center; }
 .vu-col { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }

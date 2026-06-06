@@ -98,7 +98,12 @@ function bpmBadge(trackBpm, refBpm) {
   return { label: '●', color: '#444', title: 'Incompatível' };
 }
 
-export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch, onLoadToDeck, onAddToSetlist }) {
+function formatTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+export default function TrackLibrary({ tracks, history = [], isLoading, deckA, deckB, onSearch, onLoadToDeck, onAddToSetlist }) {
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState('generos');
   const refBpm = deckA?.bpm || deckB?.bpm || null;
@@ -129,17 +134,14 @@ export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch
       </div>
 
       <div className="library-tabs">
-        <button
-          className={`lib-tab ${tab === 'generos' ? 'lib-tab-active' : ''}`}
-          onClick={() => setTab('generos')}
-        >
+        <button className={`lib-tab ${tab === 'generos' ? 'lib-tab-active' : ''}`} onClick={() => setTab('generos')}>
           GÊNEROS
         </button>
-        <button
-          className={`lib-tab ${tab === 'radio' ? 'lib-tab-active' : ''}`}
-          onClick={() => setTab('radio')}
-        >
-          🌍 RÁDIO MUNDIAL
+        <button className={`lib-tab ${tab === 'radio' ? 'lib-tab-active' : ''}`} onClick={() => setTab('radio')}>
+          🌍 RÁDIO
+        </button>
+        <button className={`lib-tab ${tab === 'history' ? 'lib-tab-active' : ''}`} onClick={() => setTab('history')}>
+          🕐 {history.length > 0 ? `HISTÓRICO (${history.length})` : 'HISTÓRICO'}
         </button>
       </div>
 
@@ -149,6 +151,36 @@ export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch
             <button key={g.query} className="genre-chip" onClick={() => handleChip(g)}>
               {g.label}
             </button>
+          ))}
+        </div>
+      )}
+
+      {tab === 'history' && (
+        <div className="library-list">
+          {history.length === 0 ? (
+            <div className="library-state">
+              Nenhuma música tocada ainda<br />
+              <small>As músicas tocadas nos decks aparecem aqui</small>
+            </div>
+          ) : history.map((entry, idx) => (
+            <div key={idx} className="lib-track">
+              <img src={entry.track.image} alt={entry.track.title} className="lib-img" />
+              <div className="lib-info">
+                <div className="lib-title">{entry.track.title}</div>
+                <div className="lib-artist">{entry.track.artist}</div>
+                <div className="lib-bpm">
+                  <span className="hist-deck">DECK {entry.deck}</span>
+                  {' · '}{entry.track.bpm} BPM
+                  {entry.track.camelot && <span> · {entry.track.camelot}</span>}
+                  {' · '}<span className="hist-time">{formatTime(entry.playedAt)}</span>
+                </div>
+              </div>
+              <div className="lib-actions">
+                <button onClick={() => onLoadToDeck(entry.track, 'A')} title="Carregar no Deck A">A</button>
+                <button onClick={() => onLoadToDeck(entry.track, 'B')} title="Carregar no Deck B">B</button>
+                <button onClick={() => onAddToSetlist(entry.track)} title="Adicionar ao Setlist">+</button>
+              </div>
+            </div>
           ))}
         </div>
       )}

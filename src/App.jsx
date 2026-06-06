@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSoundFX } from './hooks/useSoundFX';
+import { toCamelot } from './utils/camelot';
 import './styles/App.css';
 import Header from './components/Header';
 import LoginModal from './components/LoginModal';
@@ -49,6 +50,7 @@ function App() {
 
   const [library, setLibrary] = useState([]);
   const [setlist, setSetlist] = useState([]);
+  const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -243,6 +245,7 @@ function App() {
   const playDeck = useCallback(async (deck) => {
     const track = deck === 'A' ? deckA : deckB;
     if (!track || !deviceId || !token) return;
+    setHistory(prev => [{ track, deck, playedAt: Date.now() }, ...prev].slice(0, 50));
 
     // Transfer playback to our SDK device first (activates it for DRM)
     await fetch('https://api.spotify.com/v1/me/player', {
@@ -284,64 +287,121 @@ function App() {
     abortTransitionRef.current = true;
   }, []);
 
-  // ── Auto-transition: fade A out → switch → fade B in ─────────────────────
+  // ── Transition: crossfade real (preview) ou dois-fase (fallback) ──────────
   const transition = useCallback(async () => {
-    const targetDeck = activeDeck === 'A' ? 'B' : 'A';
+    const targetDeck  = activeDeck === 'A' ? 'B' : 'A';
     const targetTrack = targetDeck === 'A' ? deckA : deckB;
     if (!targetTrack) { alert('Carregue uma música no outro deck primeiro!'); return; }
     if (isTransitioningRef.current) return;
 
-    const totalMs     = transitionDuration * 1000;
-    const fadeOutMs   = totalMs * 0.45;
-    const fadeInMs    = totalMs * 0.55;
-    const STEPS       = 60;
+    const totalMs = transitionDuration * 1000;
+    const STEPS   = 80;
 
     isTransitioningRef.current = true;
     abortTransitionRef.current = false;
     setIsTransitioning(true);
 
-    // Current volume before we take control
     const startVol = activeDeck === 'A'
       ? Math.max(0.05, (100 - crossfader) / 100)
       : Math.max(0.05, crossfader / 100);
 
-    // ── Phase 1: Fade out current track ────────────────────────────────────
-    const stepOutMs = fadeOutMs / STEPS;
-    for (let i = 1; i <= STEPS; i++) {
-      if (abortTransitionRef.current) {
-        playerRef.current?.setVolume(startVol);
-        isTransitioningRef.current = false;
-        setIsTransitioning(false);
-        setTransitionProgress(0);
+    const done = () => {
+      setCrossfader(targetDeck === 'B' ? 95 : 5);
+      isTransitioningRef.current = false;
+      abortTransitionRef.current = false;
+      setIsTransitioning(false);
+      setTransitionProgress(0);
+    };
+
+    const step = (ms) => new Promise(r => setTimeout(r, ms));
+    const aborted = () => abortTransitionRef.current;
+
+    // ── MODO BLEND: dois canais simultâneos via preview URL ─────────────────
+    if (targetTrack.previewUrl && transitionDuration >= 10) {
+      let preview = null;
+      try {
+        preview = new Audio(targetTrack.previewUrl);
+        preview.volume = 0;
+        preview.loop = true;
+        await preview.play(); // requer gesto de usuário — já existe pelo clique
+
+        // Crossfade: A (Spotify) desce, B (preview) sobe ao mesmo tempo
+        const blendMs  = totalMs * 0.82;
+        const swapMs   = totalMs * 0.18;
+        const blendStep = blendMs / STEPS;
+
+        for (let i = 1; i <= STEPS; i++) {
+          if (aborted()) throw new Error('abort');
+          const t = sCurve(i / STEPS);
+          playerRef.current?.setVolume(Math.max(0.001, startVol * (1 - t)));
+          preview.volume = Math.min(1, t * 0.82);
+          setTransitionProgress(Math.round((i / STEPS) * 80));
+          await step(blendStep);
+        }
+
+        // Troca o Spotify para a track B (A já está em silêncio)
+        setTransitionProgress(82);
+        await playDeck(targetDeck);
+        playerRef.current?.setVolume(0.001);
+
+        // Swap rápido: apaga preview, sobe Spotify B
+        const swapStep = swapMs / 30;
+        for (let i = 1; i <= 30; i++) {
+          if (aborted()) break;
+          const t = i / 30;
+          preview.volume = Math.max(0, 0.82 * (1 - sCurve(t)));
+          playerRef.current?.setVolume(sCurve(t) * 0.85);
+          setTransitionProgress(82 + Math.round(t * 18));
+          await step(swapStep);
+        }
+
+        preview.pause();
+        preview = null;
+        done();
         return;
+
+      } catch {
+        // Preview falhou ou foi cancelado — limpa e cai no fallback
+        try { preview?.pause(); } catch {}
+        preview = null;
+        if (aborted()) {
+          playerRef.current?.setVolume(startVol);
+          isTransitioningRef.current = false;
+          setIsTransitioning(false);
+          setTransitionProgress(0);
+          return;
+        }
+        // Restaura volume e continua com fallback abaixo
+        playerRef.current?.setVolume(startVol);
+        setTransitionProgress(0);
       }
-      const vol = startVol * (1 - sCurve(i / STEPS));
-      playerRef.current?.setVolume(Math.max(0.001, vol));
-      setTransitionProgress(Math.round((i / STEPS) * 46));
-      await new Promise(r => setTimeout(r, stepOutMs));
     }
 
-    // ── Switch track at silence ─────────────────────────────────────────────
+    // ── FALLBACK: fade out A → silêncio → fade in B ─────────────────────────
+    const outMs  = totalMs * 0.45;
+    const inMs   = totalMs * 0.55;
+    const outStep = outMs / STEPS;
+    const inStep  = inMs  / STEPS;
+
+    for (let i = 1; i <= STEPS; i++) {
+      if (aborted()) { playerRef.current?.setVolume(startVol); done(); return; }
+      playerRef.current?.setVolume(Math.max(0.001, startVol * (1 - sCurve(i / STEPS))));
+      setTransitionProgress(Math.round((i / STEPS) * 46));
+      await step(outStep);
+    }
+
     setTransitionProgress(50);
     await playDeck(targetDeck);
     playerRef.current?.setVolume(0.001);
 
-    // ── Phase 2: Fade in new track ──────────────────────────────────────────
-    const stepInMs = fadeInMs / STEPS;
     for (let i = 1; i <= STEPS; i++) {
-      if (abortTransitionRef.current) break;
-      const vol = sCurve(i / STEPS) * 0.85;
-      playerRef.current?.setVolume(Math.max(0.001, vol));
+      if (aborted()) break;
+      playerRef.current?.setVolume(Math.max(0.001, sCurve(i / STEPS) * 0.85));
       setTransitionProgress(50 + Math.round((i / STEPS) * 50));
-      await new Promise(r => setTimeout(r, stepInMs));
+      await step(inStep);
     }
 
-    // Restore crossfader position to match the new active deck
-    setCrossfader(targetDeck === 'B' ? 95 : 5);
-    isTransitioningRef.current = false;
-    abortTransitionRef.current = false;
-    setIsTransitioning(false);
-    setTransitionProgress(0);
+    done();
   }, [activeDeck, deckA, deckB, crossfader, transitionDuration, playDeck]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
@@ -366,6 +426,7 @@ function App() {
     title: t.name,
     artist: t.artists.map(a => a.name).join(', '),
     image: t.album.images[0]?.url,
+    previewUrl: t.preview_url || null,
     spotifyUrl: t.external_urls.spotify,
     duration: Math.round(t.duration_ms / 1000),
     popularity: t.popularity || 0,
@@ -425,7 +486,15 @@ function App() {
       });
       if (!res.ok) return;
       const f = await res.json();
-      const updated = { ...track, bpm: Math.round(f.tempo), energy: f.energy, danceability: f.danceability };
+      const updated = {
+        ...track,
+        bpm: Math.round(f.tempo),
+        energy: f.energy,
+        danceability: f.danceability,
+        key: f.key,
+        mode: f.mode,
+        camelot: toCamelot(f.key, f.mode),
+      };
       if (deck === 'A') setDeckA(prev => prev?.id === track.id ? updated : prev);
       else setDeckB(prev => prev?.id === track.id ? updated : prev);
     } catch { /* use estimated */ }
@@ -437,6 +506,11 @@ function App() {
     fetchRealBpm(track, deck);
     playTec();
   };
+
+  const updateDeckBpm = useCallback((deck, bpm) => {
+    if (deck === 'A') setDeckA(prev => prev ? { ...prev, bpm } : prev);
+    else setDeckB(prev => prev ? { ...prev, bpm } : prev);
+  }, []);
 
   const addToSetlist = (track) => setSetlist(prev => prev.find(t => t.id === track.id) ? prev : [...prev, track]);
   const removeFromSetlist = (id) => setSetlist(prev => prev.filter(t => t.id !== id));
@@ -521,9 +595,11 @@ function App() {
           onAddToSetlist={addToSetlist}
           onRemoveFromSetlist={removeFromSetlist}
           onMoveInSetlist={moveInSetlist}
+          history={history}
           onSearch={searchTracks}
           onRecommend={getRecommendations}
           onSavePlaylist={savePlaylist}
+          onBpmChange={updateDeckBpm}
           onHorn={playHorn}
           onTec={playTec}
           onDrop={playDrop}

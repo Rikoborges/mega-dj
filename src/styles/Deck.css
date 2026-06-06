@@ -63,12 +63,24 @@
 .deck-title { font-size: 0.9rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .deck-artist { font-size: 0.78rem; color: #666; margin-top: 0.2rem; }
 
+/* Stats row (BPM + Key) */
+.deck-stats { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+
 /* BPM */
 .deck-bpm { display: flex; align-items: baseline; gap: 0.4rem; justify-content: center; }
-.bpm-value { font-size: 2.4rem; font-weight: 900; font-variant-numeric: tabular-nums; color: #f59e0b; line-height: 1; }
+.bpm-value { font-size: 2.1rem; font-weight: 900; font-variant-numeric: tabular-nums; color: #f59e0b; line-height: 1; }
 .deck-B .bpm-value { color: #3b82f6; }
-.bpm-label { font-size: 0.62rem; color: #555; letter-spacing: 0.1em; align-self: flex-end; padding-bottom: 5px; }
-.deck-energy { font-size: 0.68rem; color: #888; margin-left: 0.4rem; }
+.bpm-label { font-size: 0.58rem; color: #555; letter-spacing: 0.1em; align-self: flex-end; padding-bottom: 4px; }
+.deck-energy { font-size: 0.65rem; color: #888; margin-left: 0.3rem; }
+
+/* Key (Camelot) */
+.deck-key { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.key-label { font-size: 0.55rem; color: #555; letter-spacing: 0.1em; font-weight: 700; }
+.key-value { font-size: 1.35rem; font-weight: 900; line-height: 1; }
+.key-major { color: #f59e0b; }
+.deck-B .key-major { color: #3b82f6; }
+.key-minor { color: #a78bfa; }
+.key-name { font-size: 0.55rem; color: #555; text-align: center; }
 
 /* Waveform */
 .waveform { display: flex; align-items: center; justify-content: center; gap: 2px; height: 28px; }
@@ -81,8 +93,20 @@
 .deck-progress-fill { height: 100%; background: #f59e0b; border-radius: 999px; transition: width 0.5s linear; }
 .deck-B .deck-progress-fill { background: #3b82f6; }
 
+/* TAP BPM */
+.tap-btn {
+  padding: 0.28rem 0.65rem;
+  background: #111; border: 1px solid #222;
+  border-radius: 6px; color: #555;
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em;
+  cursor: pointer; transition: all 0.1s; user-select: none;
+}
+.tap-btn:active { transform: scale(0.93); }
+.tap-btn.tap-active { border-color: #f59e0b; color: #f59e0b; }
+.deck-B .tap-btn.tap-active { border-color: #3b82f6; color: #3b82f6; }
+
 /* Controls */
-.deck-controls { display: flex; justify-content: center; }
+.deck-controls { display: flex; justify-content: center; gap: 0.5rem; align-items: center; }
 .deck-play-btn {
   width: 50px; height: 50px;
   border-radius: 50%;

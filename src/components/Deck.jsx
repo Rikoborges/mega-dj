@@ -1,8 +1,11 @@
 import React from 'react';
+import { useBpmTap } from '../hooks/useBpmTap';
+import { keyLabel } from '../utils/camelot';
 import '../styles/Deck.css';
 
-export default function Deck({ label, side, track, isActive, isPlaying, progress, playerReady, onTogglePlay, onAddToSetlist, onRecommend }) {
+export default function Deck({ label, side, track, isActive, isPlaying, progress, playerReady, onTogglePlay, onAddToSetlist, onRecommend, onBpmChange }) {
   const playing = isActive && isPlaying;
+  const { tap, reset, tapCount } = useBpmTap(onBpmChange);
 
   return (
     <div className={`deck deck-${side} ${isActive ? 'deck-active' : ''}`}>
@@ -25,11 +28,22 @@ export default function Deck({ label, side, track, isActive, isPlaying, progress
             <div className="deck-artist">{track.artist}</div>
           </div>
 
-          <div className="deck-bpm">
-            <span className="bpm-label">BPM</span>
-            <span className="bpm-value">{track.bpm}</span>
-            {track.energy != null && (
-              <span className="deck-energy" title="Energia">⚡{Math.round(track.energy * 100)}%</span>
+          <div className="deck-stats">
+            <div className="deck-bpm">
+              <span className="bpm-label">BPM</span>
+              <span className="bpm-value">{track.bpm}</span>
+              {track.energy != null && (
+                <span className="deck-energy" title="Energia">⚡{Math.round(track.energy * 100)}%</span>
+              )}
+            </div>
+            {track.camelot && (
+              <div className="deck-key" title={keyLabel(track.key, track.mode)}>
+                <span className="key-label">KEY</span>
+                <span className={`key-value key-${track.camelot.endsWith('B') ? 'major' : 'minor'}`}>
+                  {track.camelot}
+                </span>
+                <span className="key-name">{keyLabel(track.key, track.mode)}</span>
+              </div>
             )}
           </div>
 
@@ -55,6 +69,14 @@ export default function Deck({ label, side, track, isActive, isPlaying, progress
               title={playerReady ? '' : 'Aguardando player...'}
             >
               {playing ? '⏸' : '▶'}
+            </button>
+            <button
+              className={`tap-btn ${tapCount >= 2 ? 'tap-active' : ''}`}
+              onClick={tap}
+              onDoubleClick={reset}
+              title="Toque no ritmo para detectar BPM · Duplo clique para resetar"
+            >
+              {tapCount < 2 ? 'TAP' : `TAP ×${tapCount}`}
             </button>
           </div>
 
