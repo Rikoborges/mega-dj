@@ -32,6 +32,19 @@
 }
 .library-search button:hover { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
+/* Tabs */
+.library-tabs {
+  display: flex; border-bottom: 1px solid #151525;
+}
+.lib-tab {
+  flex: 1; padding: 0.45rem 0.5rem;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: #444; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em;
+  cursor: pointer; transition: all 0.15s; text-transform: uppercase;
+}
+.lib-tab:hover { color: #888; }
+.lib-tab-active { color: #f59e0b; border-bottom-color: #f59e0b; }
+
 .library-genres {
   display: flex; flex-wrap: wrap; gap: 0.35rem;
   padding: 0.6rem 1.1rem; border-bottom: 1px solid #151525;
@@ -42,6 +55,20 @@
   transition: all 0.15s; font-weight: 600;
 }
 .genre-chip:hover { background: #f59e0b; color: #000; border-color: #f59e0b; }
+
+/* Rádio BR */
+.library-radio { flex-direction: column; gap: 0.28rem; }
+.radio-label {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em;
+  color: #2a2a3a; text-transform: uppercase; margin-bottom: 0.15rem;
+  width: 100%;
+}
+.radio-chip {
+  border-radius: 7px; width: 100%; text-align: left;
+  padding: 0.3rem 0.75rem; font-size: 0.76rem; font-weight: 600;
+  border-color: #1a1a2a; color: #888;
+}
+.radio-chip:hover { background: #1a1a30; color: #f59e0b; border-color: #f59e0b; }
 
 .library-list { overflow-y: auto; flex: 1; }
 

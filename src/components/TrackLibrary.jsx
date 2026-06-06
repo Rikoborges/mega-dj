@@ -14,6 +14,21 @@ const GENRES = [
   { label: 'Pagode',     query: 'pagode brasileiro',           bpm: 100 },
 ];
 
+const RADIO_BR = [
+  { label: '🔥 Top Agora',    query: 'top brasil 2025 mais tocadas radio',     bpm: 120 },
+  { label: '📻 Funk Pop',     query: 'funk pop ostentacao brasil 2025',         bpm: 135 },
+  { label: '🤠 Sertanejo',    query: 'sertanejo universitario top 2025',        bpm: 105 },
+  { label: '🥁 Pagode Novo',  query: 'pagode novo 2025 mais tocado',            bpm: 100 },
+  { label: '🌟 Pop BR',       query: 'pop brasileiro 2025 hits radio',          bpm: 115 },
+  { label: '💃 Forró',        query: 'forro eletronico hits 2025',              bpm: 128 },
+  { label: '🎵 Arrocha',      query: 'arrocha romantico mais tocado 2025',      bpm: 72  },
+  { label: '🌊 Piseiro',      query: 'piseiro eletronico hits 2025',            bpm: 132 },
+  { label: '🎤 Brega Funk',   query: 'brega funk pernambuco hits 2025',         bpm: 130 },
+  { label: '📱 Viral BR',     query: 'musicas virais brasil tiktok 2025',       bpm: 118 },
+  { label: '🏖 Axé',          query: 'axe musica bahia hits 2025',              bpm: 130 },
+  { label: '🎸 Samba Rock',   query: 'samba rock nacional hits',                bpm: 95  },
+];
+
 function bpmBadge(trackBpm, refBpm) {
   if (!refBpm) return null;
   const diff = Math.min(
@@ -29,11 +44,17 @@ function bpmBadge(trackBpm, refBpm) {
 
 export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch, onLoadToDeck, onAddToSetlist }) {
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState('generos');
   const refBpm = deckA?.bpm || deckB?.bpm || null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) onSearch(query.trim());
+  };
+
+  const handleChip = (item) => {
+    setQuery('');
+    onSearch(item.query, item.bpm);
   };
 
   return (
@@ -51,17 +72,41 @@ export default function TrackLibrary({ tracks, isLoading, deckA, deckB, onSearch
         </form>
       </div>
 
-      <div className="library-genres">
-        {GENRES.map(g => (
-          <button
-            key={g.query}
-            className="genre-chip"
-            onClick={() => { setQuery(''); onSearch(g.query, g.bpm); }}
-          >
-            {g.label}
-          </button>
-        ))}
+      <div className="library-tabs">
+        <button
+          className={`lib-tab ${tab === 'generos' ? 'lib-tab-active' : ''}`}
+          onClick={() => setTab('generos')}
+        >
+          GÊNEROS
+        </button>
+        <button
+          className={`lib-tab ${tab === 'radio' ? 'lib-tab-active' : ''}`}
+          onClick={() => setTab('radio')}
+        >
+          📻 RÁDIO BR
+        </button>
       </div>
+
+      {tab === 'generos' && (
+        <div className="library-genres">
+          {GENRES.map(g => (
+            <button key={g.query} className="genre-chip" onClick={() => handleChip(g)}>
+              {g.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === 'radio' && (
+        <div className="library-genres library-radio">
+          <div className="radio-label">Mais tocadas nas rádios brasileiras</div>
+          {RADIO_BR.map(r => (
+            <button key={r.query} className="genre-chip radio-chip" onClick={() => handleChip(r)}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="library-list">
         {isLoading && (
