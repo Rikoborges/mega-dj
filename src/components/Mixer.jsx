@@ -14,7 +14,7 @@ function bpmCompat(bpmA, bpmB) {
   return              { label: 'INCOMP.',   color: '#ef4444' };
 }
 
-export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader, onCrossfaderChange, onTransition, onHorn, onTec, onDrop, onScratch }) {
+export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader, onCrossfaderChange, onTransition, onHorn, onTec, onDrop, onScratch, onRiser, onSiren, onClap, onRewind }) {
   const compat = bpmCompat(deckA?.bpm, deckB?.bpm);
 
   const [vuA, setVuA] = useState(3);
@@ -93,9 +93,13 @@ export default function Mixer({ deckA, deckB, activeDeck, isPlaying, crossfader,
 
       <div className="fx-pads">
         <button className="fx-btn horn"    onClick={onHorn}    title="Air Horn">📯 HORN</button>
-        <button className="fx-btn tec"     onClick={onTec}     title="Click">⚡ TEC</button>
+        <button className="fx-btn tec"     onClick={onTec}     title="Click Eletrônico">⚡ TEC</button>
         <button className="fx-btn drop"    onClick={onDrop}    title="Bass Drop">💥 DROP</button>
-        <button className="fx-btn scratch" onClick={onScratch} title="Scratch">🎚 SCRATCH</button>
+        <button className="fx-btn scratch" onClick={onScratch} title="Scratch de Vinil">🎚 SCRATCH</button>
+        <button className="fx-btn riser"   onClick={onRiser}   title="Riser — Tensão Crescente">🚀 RISER</button>
+        <button className="fx-btn siren"   onClick={onSiren}   title="Sirene de Festa">🚨 SIREN</button>
+        <button className="fx-btn clap"    onClick={onClap}    title="Palmada / Caixa">👏 CLAP</button>
+        <button className="fx-btn rewind"  onClick={onRewind}  title="Freio de Vinil">⏪ REWIND</button>
       </div>
     </div>
   );
