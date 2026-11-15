@@ -17,11 +17,13 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
 }
 
 .app {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
 }
 
@@ -71,5 +73,23 @@ body {
 
   .app-content {
     padding: 1rem;
+  }
+}
+
+/* ── Acessibilidade ───────────────────────────────────────────── */
+/* Foco visível para quem usa teclado (atalhos Q/W/T pedem isso) */
+:where(button, input, select, textarea, a):focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+button { touch-action: manipulation; }
+
+/* Desliga vinil girando, waveform e animações para quem pediu menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

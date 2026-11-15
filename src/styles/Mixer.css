@@ -9,21 +9,21 @@
   gap: 1rem;
 }
 
-.mixer-title { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.4em; color: #333; }
+.mixer-title { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.4em; color: #7f7f92; }
 
 /* BPM */
 .mixer-bpm-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center; }
 .mixer-bpm-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .mixer-bpm-num { font-size: 1.35rem; font-weight: 900; font-variant-numeric: tabular-nums; color: #fff; line-height: 1; }
-.mixer-bpm-tag { font-size: 0.58rem; font-weight: 700; color: #444; letter-spacing: 0.1em; }
-.mixer-compat { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.05em; text-align: center; flex: 1; transition: color 0.3s; }
+.mixer-bpm-tag { font-size: 0.66rem; font-weight: 700; color: #7f7f92; letter-spacing: 0.1em; }
+.mixer-compat { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-align: center; flex: 1; transition: color 0.3s; }
 
 /* Key row */
 .mixer-key-row { display: flex; align-items: center; gap: 0.4rem; width: 100%; justify-content: center; }
 .mixer-cam { font-size: 1rem; font-weight: 900; min-width: 32px; text-align: center; }
 .mixer-cam-maj { color: #f59e0b; }
 .mixer-cam-min { color: #a78bfa; }
-.mixer-key-compat { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.04em; text-align: center; flex: 1; transition: color 0.3s; }
+.mixer-key-compat { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; text-align: center; flex: 1; transition: color 0.3s; }
 
 /* VU meter */
 .mixer-vu-row { display: flex; gap: 6px; align-items: center; height: 70px; width: 100%; justify-content: center; }
@@ -31,15 +31,15 @@
 .vu-bar-wrap { flex: 1; width: 16px; background: #111; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
 .vu-bar { width: 100%; background: linear-gradient(to top, #22c55e 0%, #f59e0b 60%, #ef4444 100%); border-radius: 4px; transition: height 0.1s ease-out; min-height: 2px; }
 .vu-bar-b { background: linear-gradient(to top, #3b82f6 0%, #8b5cf6 60%, #ef4444 100%); }
-.vu-label { font-size: 0.58rem; color: #444; font-variant-numeric: tabular-nums; }
+.vu-label { font-size: 0.66rem; color: #7f7f92; font-variant-numeric: tabular-nums; }
 .vu-divider { width: 1px; height: 60%; background: #222; }
 
 /* Crossfader */
 .mixer-cf-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
-.mixer-cf-labels { display: flex; justify-content: space-between; width: 100%; font-size: 0.72rem; font-weight: 700; color: #333; }
+.mixer-cf-labels { display: flex; justify-content: space-between; width: 100%; font-size: 0.72rem; font-weight: 700; color: #7f7f92; }
 .mixer-cf-labels .cf-active { color: #f59e0b; }
 .crossfader { width: 100%; accent-color: #f59e0b; cursor: pointer; }
-.mixer-cf-tag { font-size: 0.5rem; letter-spacing: 0.25em; color: #2a2a3a; font-weight: 700; }
+.mixer-cf-tag { font-size: 0.7rem; letter-spacing: 0.25em; color: #7f7f92; font-weight: 700; }
 
 /* Transition section */
 .transition-section { width: 100%; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -48,9 +48,9 @@
 .speed-btn {
   flex: 1; padding: 0.28rem 0.2rem;
   background: #111; border: 1px solid #1e1e2e;
-  border-radius: 6px; color: #444;
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em;
-  cursor: pointer; transition: all 0.12s;
+  border-radius: 6px; color: #7f7f92;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em;
+  cursor: pointer; transition: background-color 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, opacity 0.12s;
 }
 .speed-btn:hover:not(:disabled) { border-color: #f59e0b; color: #f59e0b; }
 .speed-btn.speed-active { background: #1a1a2e; border-color: #f59e0b; color: #f59e0b; }
@@ -61,7 +61,7 @@
   background: #1a1a2e; border: 1px solid #2a2a4a;
   border-radius: 8px; color: #7c7caa;
   font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em;
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, opacity 0.15s;
 }
 .transition-btn:hover:not(:disabled) { background: #22c55e; border-color: #22c55e; color: #000; }
 .transition-btn:disabled { opacity: 0.3; cursor: default; }
@@ -71,7 +71,7 @@
   display: flex; align-items: center; gap: 0.4rem; width: 100%;
 }
 .transition-phase-label {
-  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em;
   color: #f59e0b; width: 48px; flex-shrink: 0; text-align: center;
 }
 .transition-bar-wrap {
@@ -87,8 +87,8 @@
 .cancel-btn {
   padding: 0.25rem 0.5rem; background: transparent;
   border: 1px solid #333; border-radius: 6px;
-  color: #555; font-size: 0.6rem; font-weight: 700;
-  cursor: pointer; transition: all 0.12s; flex-shrink: 0;
+  color: #9a9aaa; font-size: 0.68rem; font-weight: 700;
+  cursor: pointer; transition: background-color 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, opacity 0.12s; flex-shrink: 0;
 }
 .cancel-btn:hover { border-color: #ef4444; color: #ef4444; }
 
@@ -99,7 +99,7 @@
   border: 1px solid #222; border-radius: 8px;
   background: #141420; color: #888;
   font-size: 0.68rem; font-weight: 700; cursor: pointer;
-  transition: all 0.1s; letter-spacing: 0.03em;
+  transition: background-color 0.1s, color 0.1s, border-color 0.1s, transform 0.1s, opacity 0.1s; letter-spacing: 0.03em;
   text-align: center;
 }
 .fx-btn:active { transform: scale(0.93); }

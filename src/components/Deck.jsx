@@ -31,7 +31,14 @@ export default function Deck({ label, side, track, isActive, isPlaying, progress
           <div className="deck-stats">
             <div className="deck-bpm">
               <span className="bpm-label">BPM</span>
-              <span className="bpm-value">{track.bpm}</span>
+              <span
+                className={`bpm-value ${track.bpmSource === 'estimado' ? 'bpm-estimated' : ''}`}
+                title={track.bpmSource === 'estimado'
+                  ? 'BPM estimado pelo gênero — use TAP para medir o real'
+                  : track.bpmSource === 'tap' ? 'BPM medido no TAP' : 'BPM do Spotify'}
+              >
+                {track.bpmSource === 'estimado' ? '~' : ''}{track.bpm}
+              </span>
               {track.energy != null && (
                 <span className="deck-energy" title="Energia">⚡{Math.round(track.energy * 100)}%</span>
               )}
