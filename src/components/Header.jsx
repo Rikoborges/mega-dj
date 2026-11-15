@@ -1,7 +1,7 @@
 import React from 'react';
 import '../styles/Header.css';
 
-export default function Header({ isAuthenticated, playerReady, onLogout }) {
+export default function Header({ mode, isAuthenticated, playerReady, onLogout, onSwitchMode }) {
   return (
     <header className="header">
       <div className="header-content">
@@ -15,11 +15,17 @@ export default function Header({ isAuthenticated, playerReady, onLogout }) {
           </svg>
           <div className="logo-text">
             <h1>MEGA DJ PRO</h1>
-            <p>Spotify Premium • Web Playback</p>
+            <p>{mode === 'local' ? 'Arquivos locais • Web Audio' : 'Spotify Premium • Web Playback'}</p>
           </div>
         </div>
         <div className="header-actions">
-          {isAuthenticated && (
+          {mode === 'local' && (
+            <button className="btn-logout" onClick={onSwitchMode}>Modo Spotify</button>
+          )}
+          {mode === 'spotify' && isAuthenticated && (
+            <button className="btn-logout" onClick={onSwitchMode}>Arquivos locais</button>
+          )}
+          {mode === 'spotify' && isAuthenticated && (
             <>
               <span className={`player-status ${playerReady ? 'ready' : 'connecting'}`}>
                 {playerReady ? '● Player pronto' : '○ Conectando...'}

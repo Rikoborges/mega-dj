@@ -6,6 +6,7 @@ import Header from './components/Header';
 import LoginModal from './components/LoginModal';
 import DJDashboard from './components/DJDashboard';
 import LoadingScreen from './components/LoadingScreen';
+import LocalDJ from './components/LocalDJ';
 
 const CLIENT_ID = 'e6465fb0b2a444fd984014236bbe8c65';
 
@@ -74,6 +75,8 @@ async function refreshAccessToken() {
 }
 
 function App() {
+  // 'spotify' = modo original | 'local' = arquivos do computador (mixagem real)
+  const [mode, setMode] = useState('spotify');
   const [token, setToken] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
   const [playerReady, setPlayerReady] = useState(false);
@@ -445,6 +448,7 @@ function App() {
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
+    if (mode !== 'spotify') return; // o modo local tem atalhos próprios
     const onKey = (e) => {
       // Ignora quando está digitando ou usando atalho do navegador (Ctrl+T, Cmd+W…)
       if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
@@ -459,7 +463,7 @@ function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeDeck, toggleDeck, transition, cancelTransition]);
+  }, [mode, activeDeck, toggleDeck, transition, cancelTransition]);
 
   // ── Track search ──────────────────────────────────────────────────────────
   const mapTrack = (t, bpm) => ({
@@ -590,6 +594,22 @@ function App() {
     finally { setIsLoading(false); }
   };
 
+  // Modo arquivos locais: não depende do Spotify, funciona até no celular
+  if (mode === 'local') {
+    return (
+      <div className="app">
+        <Header
+          mode="local"
+          isAuthenticated={false}
+          playerReady={false}
+          onLogout={logout}
+          onSwitchMode={() => setMode('spotify')}
+        />
+        <LocalDJ />
+      </div>
+    );
+  }
+
   if (isMobile) {
     return (
       <div className="app">
@@ -604,7 +624,10 @@ function App() {
           </svg>
           <h2>MEGA DJ PRO</h2>
           <p>O Spotify Web Playback SDK não funciona em celular — é uma limitação do próprio Spotify.</p>
-          <p className="mobile-hint">Abra no <strong>computador</strong> para usar o dashboard completo.</p>
+          <p className="mobile-hint">Abra no <strong>computador</strong> para usar o modo Spotify.</p>
+          <button className="btn-local" onClick={() => setMode('local')}>
+            🎚 Mixar com músicas do celular
+          </button>
         </div>
       </div>
     );
@@ -612,8 +635,14 @@ function App() {
 
   return (
     <div className="app">
-      <Header isAuthenticated={!!token} playerReady={playerReady} onLogout={logout} />
-      {!token && <LoginModal onLogin={login} />}
+      <Header
+        mode="spotify"
+        isAuthenticated={!!token}
+        playerReady={playerReady}
+        onLogout={logout}
+        onSwitchMode={() => setMode('local')}
+      />
+      {!token && <LoginModal onLogin={login} onLocal={() => setMode('local')} />}
       {token && (
         <DJDashboard
           deckA={deckA} deckB={deckB}

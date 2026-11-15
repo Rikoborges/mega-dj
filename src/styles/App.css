@@ -93,3 +93,22 @@ button { touch-action: manipulation; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Botão "modo arquivos locais" (login e tela do celular) */
+.btn-local {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  border: 2px solid #f59e0b;
+  background: transparent;
+  color: #f59e0b;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.mobile-block .btn-local { max-width: 320px; }
+@media (hover: hover) and (pointer: fine) {
+  .btn-local:hover { background: #f59e0b; color: #080810; }
+}

@@ -47,3 +47,29 @@
   gap: 1rem;
 }
 .player-status { font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 999px; } .player-status.ready { color: #22c55e; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); } .player-status.connecting { color: #888; background: rgba(255,255,255,0.05); border: 1px solid #333; animation: blink 1.5s ease-in-out infinite; } @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.header-actions { align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+
+.btn-logout {
+  min-height: 36px;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #2a2a3a;
+  background: transparent;
+  color: #ccc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-logout:hover { border-color: #f59e0b; color: #fff; }
+}
+
+/* Celular: logo menor para caber o botão ao lado */
+@media (max-width: 520px) {
+  .header { padding: 0.75rem 1rem; }
+  .logo-svg { width: 36px; height: 36px; }
+  .logo-text h1 { font-size: 1.25rem; }
+  .logo-text p { display: none; }
+}

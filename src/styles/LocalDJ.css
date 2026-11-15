@@ -1,0 +1,295 @@
+/* ── Modo arquivos locais ─────────────────────────────────────────
+   Desktop: DECK A | MIXER | DECK B (como um equipamento real)
+   Celular: os dois decks lado a lado, mixer inteiro embaixo
+            (o polegar alcança o crossfader sem rolar a tela)
+   ─────────────────────────────────────────────────────────────── */
+
+.local-dj {
+  min-height: calc(100dvh - 64px);
+  background: #080810;
+  padding: clamp(0.6rem, 2vw, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.local-dj-intro {
+  margin: 0;
+  color: #9a9aaa;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+.local-dj-intro strong { color: #f59e0b; }
+
+.local-dj-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.local-dj-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* Esconde visualmente, mas o leitor de tela e o teclado continuam achando */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Deck ─────────────────────────────────────────────────────── */
+.ldeck {
+  background: #0e0e18;
+  border: 1px solid #1e1e2e;
+  border-radius: 14px;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 360px;
+  min-width: 0; /* deixa o título longo encolher em vez de estourar a grade */
+}
+.ldeck-A { border-top: 3px solid #f59e0b; --deck: #f59e0b; }
+.ldeck-B { border-top: 3px solid #3b82f6; --deck: #3b82f6; }
+.ldeck.is-dragging { outline: 2px dashed var(--deck); outline-offset: -6px; }
+
+.ldeck-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ldeck-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: #9a9aaa;
+}
+.ldeck-swap {
+  font-size: 0.75rem;
+  color: #9a9aaa;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Área de carregar (vazia) */
+.ldeck-drop {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  text-align: center;
+  border: 2px dashed #2a2a3a;
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  color: #9a9aaa;
+}
+.ldeck-drop-icon  { font-size: 2.2rem; color: var(--deck); }
+.ldeck-drop-title { font-weight: 800; color: #e5e5ee; }
+.ldeck-drop-hint  { font-size: 0.78rem; }
+
+/* O input está escondido: o foco do teclado aparece na área inteira */
+.ldeck-drop:focus-within,
+.ldeck-swap:focus-within {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ldeck-drop:hover { border-color: var(--deck); color: #e5e5ee; }
+  .ldeck-swap:hover { border-color: var(--deck); color: #e5e5ee; }
+}
+
+/* Vinil */
+.ldeck-platter { display: flex; justify-content: center; }
+.ldeck-vinyl {
+  width: min(170px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle, #111 0 2px, #1a1a1a 2px 4px);
+  border: 3px solid #1e1e2e;
+  display: grid;
+  place-items: center;
+}
+.ldeck-vinyl-label {
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--deck);
+  color: #080810;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+}
+.ldeck.is-playing .ldeck-vinyl { animation: ldeck-spin 1.8s linear infinite; }
+@keyframes ldeck-spin { to { transform: rotate(360deg); } }
+
+.ldeck-title {
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ldeck-time {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #9a9aaa;
+  font-variant-numeric: tabular-nums;
+}
+.ldeck-remaining { color: var(--deck); }
+
+.ldeck-seek {
+  width: 100%;
+  accent-color: var(--deck);
+  height: 28px; /* área de toque maior que a barra desenhada */
+  cursor: pointer;
+}
+
+.ldeck-play {
+  align-self: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--deck);
+  background: transparent;
+  color: var(--deck);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+.ldeck-play.active { background: var(--deck); color: #080810; }
+
+/* ── Mixer ───────────────────────────────────────────────────── */
+.lmix {
+  background: #0e0e18;
+  border: 1px solid #1e1e2e;
+  border-radius: 14px;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.lmix-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.4em;
+  color: #9a9aaa;
+}
+
+.lmix-faders {
+  display: flex;
+  gap: 1.75rem;
+  justify-content: center;
+}
+.lmix-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+.lmix-channel-A { --deck: #f59e0b; }
+.lmix-channel-B { --deck: #3b82f6; }
+.lmix-channel-label { font-size: 0.75rem; font-weight: 800; color: var(--deck); }
+
+/* Fader vertical: writing-mode deita o range de pé, direction faz o topo = 100% */
+.lmix-fader {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 36px;   /* largura de toque */
+  height: 150px;
+  accent-color: var(--deck);
+  cursor: pointer;
+}
+
+.lmix-xf { width: 100%; }
+.lmix-xf-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #7f7f92;
+}
+.lmix-xf-labels .on { color: #fff; }
+.lmix-crossfader {
+  width: 100%;
+  height: 36px;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
+.lmix-xf-tag {
+  text-align: center;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: #7f7f92;
+  font-weight: 700;
+}
+
+.lmix-keys {
+  margin: auto 0 0;
+  font-size: 0.7rem;
+  color: #7f7f92;
+  text-align: center;
+  line-height: 1.8;
+}
+.lmix-keys kbd {
+  font-family: inherit;
+  border: 1px solid #2a2a3a;
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  color: #9a9aaa;
+}
+
+/* ── Tablet e celular: decks lado a lado, mixer embaixo ───────── */
+@media (max-width: 760px) {
+  .local-dj-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+  .lmix {
+    grid-column: 1 / -1;
+    order: 3;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "title title"
+      "faders xf";
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+  .lmix-title  { grid-area: title; }
+  .lmix-faders { grid-area: faders; gap: 1rem; }
+  .lmix-xf     { grid-area: xf; }
+  .lmix-fader  { height: 110px; }
+  .lmix-keys   { display: none; } /* celular não tem teclado físico */
+
+  .ldeck { min-height: 0; gap: 0.55rem; }
+  .ldeck-drop { min-height: 180px; }
+  .ldeck-drop-hint { display: none; }
+  .ldeck-vinyl { width: min(110px, 100%); }
+  .ldeck-play { width: 52px; height: 52px; }
+}

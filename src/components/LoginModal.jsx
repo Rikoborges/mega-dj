@@ -1,7 +1,7 @@
 import React from 'react';
 import '../styles/LoginModal.css';
 
-export default function LoginModal({ onLogin }) {
+export default function LoginModal({ onLogin, onLocal }) {
   return (
     <div className="modal">
       <div className="modal-content">
@@ -27,6 +27,15 @@ export default function LoginModal({ onLogin }) {
         <div className="info-box">
           ⚠️ Necessário conta <strong>Spotify Premium</strong>
         </div>
+
+        <div className="login-divider"><span>ou</span></div>
+
+        <button className="btn-local" onClick={onLocal}>
+          🎚 Mixar com músicas do computador
+        </button>
+        <p className="login-local-hint">
+          Sem login. Os dois decks tocam juntos, com crossfader de verdade.
+        </p>
       </div>
     </div>
   );
