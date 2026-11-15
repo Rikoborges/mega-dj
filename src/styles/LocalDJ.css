@@ -119,31 +119,6 @@
   .ldeck-swap:hover { border-color: var(--deck); color: #e5e5ee; }
 }
 
-/* Vinil */
-.ldeck-platter { display: flex; justify-content: center; }
-.ldeck-vinyl {
-  width: min(170px, 100%);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    repeating-radial-gradient(circle, #111 0 2px, #1a1a1a 2px 4px);
-  border: 3px solid #1e1e2e;
-  display: grid;
-  place-items: center;
-}
-.ldeck-vinyl-label {
-  width: 34%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--deck);
-  color: #080810;
-  font-weight: 900;
-  display: grid;
-  place-items: center;
-}
-.ldeck.is-playing .ldeck-vinyl { animation: ldeck-spin 1.8s linear infinite; }
-@keyframes ldeck-spin { to { transform: rotate(360deg); } }
-
 .ldeck-title {
   font-weight: 800;
   color: #fff;
@@ -169,7 +144,6 @@
 }
 
 .ldeck-play {
-  align-self: center;
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -181,6 +155,143 @@
   transition: background-color 0.12s, color 0.12s;
 }
 .ldeck-play.active { background: var(--deck); color: #080810; }
+
+/* ── Forma de onda ── */
+.wave {
+  position: relative;
+  height: 72px;
+  border-radius: 8px;
+  background: #0a0a12;
+  border: 1px solid #1e1e2e;
+  overflow: hidden;
+}
+.wave-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  touch-action: none; /* arrastar na onda não rola a página */
+}
+.wave-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  color: #9a9aaa;
+  pointer-events: none;
+}
+
+/* ── BPM ── */
+.ldeck-bpm-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.ldeck-bpm { display: flex; align-items: baseline; gap: 0.3rem; }
+.ldeck-bpm-num {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ldeck-bpm-tag { font-size: 0.7rem; font-weight: 800; color: var(--deck); letter-spacing: 0.1em; }
+.ldeck-bpm-orig { font-size: 0.75rem; color: #9a9aaa; flex: 1; min-width: 0; }
+
+/* Botãozinho de opção (KEY LOCK, ±8%, ZERAR) */
+.ldeck-chip {
+  min-height: 30px;
+  padding: 0 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #2a2a3a;
+  background: transparent;
+  color: #9a9aaa;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background-color 0.1s, color 0.1s, border-color 0.1s;
+}
+.ldeck-chip.on { border-color: var(--deck); color: var(--deck); }
+.ldeck-chip:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Pitch ── */
+.ldeck-pitch-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ldeck-pitch-val {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ccc;
+  font-variant-numeric: tabular-nums;
+}
+.ldeck-pitch-range {
+  width: 100%;
+  height: 28px;
+  accent-color: var(--deck);
+  cursor: pointer;
+}
+
+/* ── Transporte ── */
+.ldeck-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.ldeck-nudge {
+  width: 48px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #2a2a3a;
+  background: #12121c;
+  color: #ccc;
+  font-size: 0.8rem;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ldeck-nudge:active { border-color: var(--deck); color: var(--deck); }
+
+.ldeck-sync {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 2px solid var(--deck);
+  background: transparent;
+  color: var(--deck);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ldeck-chip:not(:disabled):hover { color: #fff; border-color: var(--deck); }
+  .ldeck-sync:hover { background: var(--deck); color: #080810; }
+}
+
+/* ── BPM no topo do mixer ── */
+.lmix-bpm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+.lmix-bpm-a { color: #f59e0b; }
+.lmix-bpm-b { color: #3b82f6; }
+.lmix-bpm-diff { font-size: 0.68rem; letter-spacing: 0.05em; color: #9a9aaa; }
+.lmix-bpm-diff.ok   { color: #22c55e; }
+.lmix-bpm-diff.near { color: #eab308; }
+.lmix-bpm-diff.far  { color: #ef4444; }
 
 /* ── Mixer ───────────────────────────────────────────────────── */
 .lmix {
@@ -375,6 +486,12 @@
   .ldeck { min-height: 0; gap: 0.55rem; }
   .ldeck-drop { min-height: 180px; }
   .ldeck-drop-hint { display: none; }
-  .ldeck-vinyl { width: min(110px, 100%); }
   .ldeck-play { width: 52px; height: 52px; }
+  .wave { height: 56px; }
+  .ldeck-bpm-num { font-size: 1.35rem; }
+  .ldeck-bpm-orig { display: none; }
+  .ldeck-transport { gap: 0.4rem; }
+  .ldeck-nudge { width: 44px; }
+  .ldeck-pitch-head { flex-wrap: wrap; }
+  .ldeck-pitch-val { flex-basis: 100%; }
 }

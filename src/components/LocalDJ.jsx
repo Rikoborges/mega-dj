@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocalMixer } from '../hooks/useLocalMixer';
+import { useLocalMixer, effectiveBpm } from '../hooks/useLocalMixer';
 import LocalDeck from './LocalDeck';
 import ChannelStrip from './ChannelStrip';
 import VuMeter from './VuMeter';
@@ -9,7 +9,30 @@ export default function LocalDJ() {
   const {
     decks, crossfader, load, toggle, seek,
     setFader, setTrim, setEq, toggleKill, setFilter, setCrossfader, getLevel,
+    setPitch, togglePitchRange, toggleKeyLock, nudge, sync, getTime,
   } = useLocalMixer();
+
+  const deckProps = (id) => ({
+    id,
+    deck: decks[id],
+    getTime,
+    onLoad:       (f) => handleLoad(id, f),
+    onToggle:     () => toggle(id),
+    onSeek:       (s) => seek(id, s),
+    onPitch:      (p) => setPitch(id, p),
+    onPitchRange: () => togglePitchRange(id),
+    onKeyLock:    () => toggleKeyLock(id),
+    onNudge:      (dir) => nudge(id, dir),
+    onSync:       () => {
+      const r = sync(id);
+      setError(r.ok ? '' : r.error);
+    },
+  });
+
+  // Diferença de BPM entre os decks (o que o DJ olha antes de mixar)
+  const bpmA = effectiveBpm(decks.A);
+  const bpmB = effectiveBpm(decks.B);
+  const bpmDiff = bpmA && bpmB ? Math.abs(bpmA - bpmB) : null;
 
   const stripProps = (id) => ({
     id,
@@ -53,16 +76,18 @@ export default function LocalDJ() {
       {error && <div className="local-dj-error" role="alert">{error}</div>}
 
       <div className="local-dj-row">
-        <LocalDeck
-          id="A"
-          deck={decks.A}
-          onLoad={(f) => handleLoad('A', f)}
-          onToggle={() => toggle('A')}
-          onSeek={(s) => seek('A', s)}
-        />
+        <LocalDeck {...deckProps('A')} />
 
         <section className="lmix" aria-label="Mesa de mixagem">
           <div className="lmix-title">MIXER</div>
+
+          <div className="lmix-bpm" aria-live="polite">
+            <span className="lmix-bpm-a">{bpmA ? bpmA.toFixed(1) : '—'}</span>
+            <span className={`lmix-bpm-diff ${bpmDiff == null ? '' : bpmDiff < 0.1 ? 'ok' : bpmDiff < 3 ? 'near' : 'far'}`}>
+              {bpmDiff == null ? 'BPM' : bpmDiff < 0.1 ? 'IGUAL' : `Δ ${bpmDiff.toFixed(1)}`}
+            </span>
+            <span className="lmix-bpm-b">{bpmB ? bpmB.toFixed(1) : '—'}</span>
+          </div>
 
           <div className="lmix-strips">
             <ChannelStrip {...stripProps('A')} />
@@ -97,13 +122,7 @@ export default function LocalDJ() {
           </p>
         </section>
 
-        <LocalDeck
-          id="B"
-          deck={decks.B}
-          onLoad={(f) => handleLoad('B', f)}
-          onToggle={() => toggle('B')}
-          onSeek={(s) => seek('B', s)}
-        />
+        <LocalDeck {...deckProps('B')} />
       </div>
     </div>
   );

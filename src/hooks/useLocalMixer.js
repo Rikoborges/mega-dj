@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
+import { ANALYSIS_RATE, toMono, computePeaks, detectBpm, matchOctave } from '../audio/analyze';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MOTOR DE ÁUDIO — a "mesa de som" feita com a Web Audio API
@@ -35,7 +36,18 @@ const EMPTY_DECK = {
   eq:   { low: 0, mid: 0, high: 0 },     // dB de cada banda
   kill: { low: false, mid: false, high: false },
   filter: 0,                             // -1 (só graves) … 0 (desligado) … +1 (só agudos)
+  // ── Etapa 3 ──
+  analyzing: false,                      // analisando o arquivo (BPM + forma de onda)
+  bpm: null,                             // BPM original detectado no arquivo
+  peaks: null,                           // forma de onda (Float32Array de 0 a 1)
+  pitch: 0,                              // % de velocidade (+2 = 2% mais rápido)
+  pitchRange: 8,                         // ±8% ou ±16%, como nos CDJs
+  keyLock: true,                         // muda a velocidade sem mudar o tom
 };
+
+// BPM que está tocando agora (BPM original × velocidade do pitch)
+export const effectiveBpm = (deck) =>
+  deck.bpm ? deck.bpm * (1 + deck.pitch / 100) : null;
 
 // Crossfader de "potência constante": no meio as duas músicas ficam em ~71%
 // cada (e não 50%). Com uma linha reta, o som "afunda" no meio da mixagem
@@ -88,6 +100,34 @@ function applyChannel(ch, deck, ctx) {
   smoothSet(ch.fader.gain, deck.fader, ctx);
 }
 
+// Velocidade do <audio>. Com preservesPitch (KEY LOCK) o navegador estica o
+// tempo sem mudar o tom — o "master tempo" dos CDJs. Sem ele, acelerar deixa
+// a música mais aguda, como num toca-discos.
+function applyRate(el, deck, bend = 1) {
+  if (!el) return;
+  el.playbackRate = (1 + deck.pitch / 100) * bend;
+  el.defaultPlaybackRate = 1 + deck.pitch / 100; // senão, ao trocar o src, a velocidade volta para 1
+  el.preservesPitch = deck.keyLock;
+  el.webkitPreservesPitch = deck.keyLock; // Safari antigo
+}
+
+// Decodifica o arquivo numa taxa baixa e calcula forma de onda + BPM
+async function analyzeFile(file) {
+  const data = await file.arrayBuffer();
+  const Offline = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  // OfflineAudioContext não toca nada: só serve para decodificar/converter.
+  // Ao decodificar nele, o áudio já vem convertido para ANALYSIS_RATE.
+  const off = new Offline(1, 1, ANALYSIS_RATE);
+  const audio = await off.decodeAudioData(data);
+  const channels = [];
+  for (let c = 0; c < audio.numberOfChannels; c++) channels.push(audio.getChannelData(c));
+  const mono = toMono(channels);
+  return {
+    peaks: computePeaks(mono, 1200),
+    bpm: detectBpm(mono, audio.sampleRate),
+  };
+}
+
 // Lê o volume de um AnalyserNode e devolve 0..1 para desenhar o VU
 function readLevel(analyser, buffer) {
   analyser.getFloatTimeDomainData(buffer);
@@ -111,6 +151,8 @@ export function useLocalMixer() {
   const audioRef  = useRef({});    // elementos <audio> de cada deck
   const urlRef    = useRef({});    // object URLs, para liberar a memória depois
   const bufRef    = useRef(null);  // buffer reaproveitado pelo VU (evita lixo na memória)
+  const loadIdRef = useRef({ A: 0, B: 0 }); // descarta análise de uma música que já foi trocada
+  const bendRef   = useRef({ A: 1, B: 1 }); // empurrãozinho temporário de velocidade (nudge)
 
   const [decks, setDecks] = useState({ A: { ...EMPTY_DECK }, B: { ...EMPTY_DECK } });
   const decksRef = useRef(decks);  // cópia sempre atual, para usar fora do React
@@ -127,6 +169,7 @@ export function useLocalMixer() {
     decksRef.current = { ...decksRef.current, [id]: nextDeck };
     const nodes = nodesRef.current;
     if (nodes) applyChannel(nodes[id], nextDeck, ctxRef.current);
+    applyRate(audioRef.current[id], nextDeck, bendRef.current[id]);
     setDecks(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }, []);
 
@@ -239,7 +282,23 @@ export function useLocalMixer() {
       duration: 0,
       currentTime: 0,
       playing: false,
+      analyzing: true,
+      bpm: null,
+      peaks: null,
+      pitch: 0,
     });
+
+    // Analisa em segundo plano: a música já pode tocar enquanto isso.
+    // O "loadId" evita um bug clássico de async: se o usuário trocar de música
+    // antes de a análise terminar, o resultado antigo não pode sobrescrever o novo.
+    const loadId = ++loadIdRef.current[id];
+    analyzeFile(file)
+      .then(({ peaks, bpm }) => {
+        if (loadIdRef.current[id] === loadId) patchDeck(id, { peaks, bpm, analyzing: false });
+      })
+      .catch(() => {
+        if (loadIdRef.current[id] === loadId) patchDeck(id, { analyzing: false });
+      });
     return { ok: true };
   }, [ensureContext, patchDeck]);
 
@@ -286,6 +345,51 @@ export function useLocalMixer() {
     }
   }, []);
 
+  // ── Pitch, key lock, nudge e sync ──────────────────────────────────────────
+  const setPitch = useCallback((id, pct) => {
+    const range = decksRef.current[id].pitchRange;
+    patchDeck(id, { pitch: Math.max(-range, Math.min(range, pct)) });
+  }, [patchDeck]);
+
+  const togglePitchRange = useCallback((id) => {
+    const d = decksRef.current[id];
+    const pitchRange = d.pitchRange === 8 ? 16 : 8;
+    patchDeck(id, { pitchRange, pitch: Math.max(-pitchRange, Math.min(pitchRange, d.pitch)) });
+  }, [patchDeck]);
+
+  const toggleKeyLock = useCallback((id) => {
+    patchDeck(id, { keyLock: !decksRef.current[id].keyLock });
+  }, [patchDeck]);
+
+  // Nudge: enquanto segura o botão, o deck anda 4% mais rápido/devagar.
+  // É assim que o DJ "empurra" a música para alinhar as batidas.
+  const nudge = useCallback((id, direction) => {
+    bendRef.current[id] = 1 + direction * 0.04; // direction: -1, 0 ou +1
+    applyRate(audioRef.current[id], decksRef.current[id], bendRef.current[id]);
+  }, []);
+
+  // SYNC: ajusta o pitch deste deck para o BPM ficar igual ao do outro.
+  // Obs.: iguala a VELOCIDADE; alinhar as batidas no tempo é com o nudge.
+  const sync = useCallback((id) => {
+    const me = decksRef.current[id];
+    const other = decksRef.current[id === 'A' ? 'B' : 'A'];
+    const target = effectiveBpm(other);
+    if (!me.bpm || !target) {
+      return { ok: false, error: 'Para sincronizar, os dois decks precisam ter o BPM detectado.' };
+    }
+    const base = matchOctave(me.bpm, target); // trata 87 e 174 como compatíveis
+    const pct = (target / base - 1) * 100;
+    if (Math.abs(pct) > 16) {
+      return { ok: false, error: `Diferença grande demais (${pct.toFixed(1)}%). O pitch só vai até ±16%.` };
+    }
+    const pitchRange = Math.abs(pct) > 8 ? 16 : me.pitchRange;
+    patchDeck(id, { pitchRange, pitch: Math.round(pct * 100) / 100 });
+    return { ok: true };
+  }, [patchDeck]);
+
+  // Posição atual em segundos (para a forma de onda desenhar a 60 fps, fora do React)
+  const getTime = useCallback((id) => audioRef.current[id]?.currentTime || 0, []);
+
   // ── VU: o componente chama isso ~60x por segundo (fora do React) ──────────
   const getLevel = useCallback((which) => {
     const nodes = nodesRef.current;
@@ -298,6 +402,7 @@ export function useLocalMixer() {
     decks, crossfader,
     load, toggle, seek,
     setFader, setTrim, setEq, toggleKill, setFilter, setCrossfader,
-    getLevel,
+    setPitch, togglePitchRange, toggleKeyLock, nudge, sync,
+    getLevel, getTime,
   };
 }
