@@ -1,28 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalMixer } from '../hooks/useLocalMixer';
 import LocalDeck from './LocalDeck';
+import ChannelStrip from './ChannelStrip';
+import VuMeter from './VuMeter';
 import '../styles/LocalDJ.css';
 
-// Fader vertical de um canal (igual ao de uma mesa de DJ)
-function ChannelFader({ id, value, onChange }) {
-  return (
-    <div className={`lmix-channel lmix-channel-${id}`}>
-      <input
-        type="range"
-        className="lmix-fader"
-        min="0" max="1" step="0.01"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-label={`Volume do canal ${id}`}
-        aria-valuetext={`${Math.round(value * 100)}%`}
-      />
-      <span className="lmix-channel-label">{id}</span>
-    </div>
-  );
-}
-
 export default function LocalDJ() {
-  const { decks, crossfader, load, toggle, seek, setFader, setCrossfader } = useLocalMixer();
+  const {
+    decks, crossfader, load, toggle, seek,
+    setFader, setTrim, setEq, toggleKill, setFilter, setCrossfader, getLevel,
+  } = useLocalMixer();
+
+  const stripProps = (id) => ({
+    id,
+    deck: decks[id],
+    getLevel,
+    onTrim:   (v) => setTrim(id, v),
+    onEq:     (band, v) => setEq(id, band, v),
+    onKill:   (band) => toggleKill(id, band),
+    onFilter: (v) => setFilter(id, v),
+    onFader:  (v) => setFader(id, v),
+  });
   const [error, setError] = useState('');
 
   const handleLoad = (id, file) => {
@@ -33,7 +31,7 @@ export default function LocalDJ() {
   // Atalhos: Q/W tocam os decks, setas mexem o crossfader
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.target.closest('input, textarea, select, [contenteditable="true"], [role="slider"]')) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase();
       if (k === 'q') toggle('A');
@@ -66,9 +64,13 @@ export default function LocalDJ() {
         <section className="lmix" aria-label="Mesa de mixagem">
           <div className="lmix-title">MIXER</div>
 
-          <div className="lmix-faders">
-            <ChannelFader id="A" value={decks.A.fader} onChange={(v) => setFader('A', v)} />
-            <ChannelFader id="B" value={decks.B.fader} onChange={(v) => setFader('B', v)} />
+          <div className="lmix-strips">
+            <ChannelStrip {...stripProps('A')} />
+            <div className="lmix-master">
+              <VuMeter getLevel={getLevel} source="master" label="master" />
+              <span className="strip-label">MASTER</span>
+            </div>
+            <ChannelStrip {...stripProps('B')} />
           </div>
 
           <div className="lmix-xf">
@@ -90,7 +92,8 @@ export default function LocalDJ() {
           </div>
 
           <p className="lmix-keys">
-            <kbd>Q</kbd> / <kbd>W</kbd> tocar · <kbd>←</kbd> <kbd>→</kbd> crossfader
+            <kbd>Q</kbd> / <kbd>W</kbd> tocar · <kbd>←</kbd> <kbd>→</kbd> crossfader<br />
+            Knobs: arraste para cima/baixo · duplo clique zera
           </p>
         </section>
 
