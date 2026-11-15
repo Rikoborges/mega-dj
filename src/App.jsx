@@ -36,6 +36,43 @@ async function pkceChallenge(verifier) {
     .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
+// ── Token storage ────────────────────────────────────────────────────────────
+// Guarda o token + a hora em que ele expira (Spotify: 1h de validade)
+function storeTokens(data) {
+  localStorage.setItem('spdj_token', data.access_token);
+  localStorage.setItem('spdj_expires', String(Date.now() + (data.expires_in || 3600) * 1000));
+  if (data.refresh_token) localStorage.setItem('spdj_refresh', data.refresh_token);
+}
+
+function clearTokens() {
+  localStorage.removeItem('spdj_token');
+  localStorage.removeItem('spdj_refresh');
+  localStorage.removeItem('spdj_expires');
+}
+
+// Troca o refresh token por um access token novo. Retorna o token ou null.
+async function refreshAccessToken() {
+  const refresh = localStorage.getItem('spdj_refresh');
+  if (!refresh) return null;
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type:    'refresh_token',
+        refresh_token: refresh,
+        client_id:     CLIENT_ID,
+      }),
+    });
+    const data = await res.json();
+    if (!data.access_token) return null;
+    storeTokens(data);
+    return data.access_token;
+  } catch {
+    return null;
+  }
+}
+
 function App() {
   const [token, setToken] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
@@ -58,6 +95,9 @@ function App() {
   const [transitionDuration, setTransitionDuration] = useState(20);
 
   const playerRef = useRef(null);
+  const tokenRef = useRef(null); // token sempre atual para o SDK, sem recriar o player
+  tokenRef.current = token;
+  const hasToken = !!token;
   const progressIntervalRef = useRef(null);
   const isTransitioningRef = useRef(false);
   const abortTransitionRef = useRef(false);
@@ -86,20 +126,30 @@ function App() {
       })
         .then(r => r.json())
         .then(data => {
+          sessionStorage.removeItem('spdj_verifier');
           if (data.access_token) {
+            storeTokens(data);
             setToken(data.access_token);
-            localStorage.setItem('spdj_token',   data.access_token);
-            if (data.refresh_token) localStorage.setItem('spdj_refresh', data.refresh_token);
           } else {
             alert('❌ Falha ao obter token: ' + (data.error_description || data.error));
           }
-        });
+        })
+        .catch(() => alert('❌ Sem conexão com o Spotify. Tente entrar de novo.'));
       return;
     }
 
-    // Restore saved token on page reload
-    const saved = localStorage.getItem('spdj_token');
-    if (saved) setToken(saved);
+    // Ao recarregar a página: usa o token salvo se ainda vale,
+    // senão renova com o refresh token (antes forçava login de novo)
+    const saved   = localStorage.getItem('spdj_token');
+    const expires = Number(localStorage.getItem('spdj_expires') || 0);
+    if (saved && Date.now() < expires - 60_000) {
+      setToken(saved);
+    } else if (localStorage.getItem('spdj_refresh')) {
+      refreshAccessToken().then(t => {
+        if (t) setToken(t);
+        else clearTokens();
+      });
+    }
   }, []);
 
   // ── Login: redirect to Spotify with PKCE ─────────────────────────────────
@@ -120,37 +170,21 @@ function App() {
     window.location.href = `https://accounts.spotify.com/authorize?${params}`;
   };
 
-  // ── Auto-refresh token before it expires (every 50 min) ─────────────────
+  // ── Auto-refresh: renova 5 min antes de expirar (calculado pela hora real) ─
   useEffect(() => {
     if (!token) return;
-    const id = setInterval(async () => {
-      const refresh  = localStorage.getItem('spdj_refresh');
-      if (!refresh) return;
-      const clientId = CLIENT_ID;
-      try {
-        const res = await fetch('https://accounts.spotify.com/api/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            grant_type:    'refresh_token',
-            refresh_token: refresh,
-            client_id:     clientId,
-          }),
-        });
-        const data = await res.json();
-        if (data.access_token) {
-          setToken(data.access_token);
-          localStorage.setItem('spdj_token', data.access_token);
-          if (data.refresh_token) localStorage.setItem('spdj_refresh', data.refresh_token);
-        }
-      } catch { /* silent — will retry next interval */ }
-    }, 50 * 60 * 1000); // 50 minutes
-    return () => clearInterval(id);
+    const expires = Number(localStorage.getItem('spdj_expires') || 0);
+    const wait = Math.max(10_000, expires - Date.now() - 5 * 60_000);
+    const id = setTimeout(async () => {
+      const fresh = await refreshAccessToken();
+      if (fresh) setToken(fresh);
+    }, wait);
+    return () => clearTimeout(id);
   }, [token]);
 
   const logout = () => {
-    localStorage.removeItem('spdj_token');
-    localStorage.removeItem('spdj_refresh');
+    clearTokens();
+    setToken(null); // faltava: sem isso o botão "Sair" não saía do dashboard
     setDeviceId(null);
     setPlayerReady(false);
     setDeckA(null); setDeckB(null);
@@ -161,15 +195,17 @@ function App() {
   };
 
   // ── Initialize Spotify Web Playback SDK ───────────────────────────────────
+  // Depende só de "tem token?" — se dependesse do token em si, a renovação
+  // automática (a cada ~1h) desconectava o player e a música parava no meio do set.
   useEffect(() => {
-    if (!token) return;
+    if (!hasToken) return;
 
     const initPlayer = () => {
       if (!window.Spotify?.Player) return;
 
       const player = new window.Spotify.Player({
         name: 'MEGA DJ PRO 🎧',
-        getOAuthToken: cb => cb(token),
+        getOAuthToken: cb => cb(tokenRef.current),
         volume: 0.8,
       });
 
@@ -192,8 +228,11 @@ function App() {
         console.error('SDK init error:', message);
       });
 
-      player.addListener('authentication_error', () => {
-        localStorage.removeItem('spdj_token');
+      player.addListener('authentication_error', async () => {
+        // Tenta renovar antes de mandar o usuário logar de novo
+        const fresh = await refreshAccessToken();
+        if (fresh) { setToken(fresh); return; }
+        clearTokens();
         setToken(null);
       });
 
@@ -213,7 +252,7 @@ function App() {
       window.removeEventListener('spotify-sdk-ready', initPlayer);
       playerRef.current?.disconnect();
     };
-  }, [token]);
+  }, [hasToken]);
 
   // ── Poll progress while playing ───────────────────────────────────────────
   useEffect(() => {
@@ -407,7 +446,9 @@ function App() {
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.tagName === 'INPUT') return;
+      // Ignora quando está digitando ou usando atalho do navegador (Ctrl+T, Cmd+W…)
+      if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === ' ')                       { e.preventDefault(); if (activeDeck) toggleDeck(activeDeck); }
       else if (e.key === 'q' || e.key === 'Q') toggleDeck('A');
       else if (e.key === 'w' || e.key === 'W') toggleDeck('B');
@@ -431,6 +472,7 @@ function App() {
     duration: Math.round(t.duration_ms / 1000),
     popularity: t.popularity || 0,
     bpm: bpm || 120,
+    bpmSource: 'estimado', // vira 'spotify' ou 'tap' quando tiver valor real
   });
 
   const searchTracks = async (query, estimatedBpm = 120) => {
@@ -489,6 +531,7 @@ function App() {
       const updated = {
         ...track,
         bpm: Math.round(f.tempo),
+        bpmSource: 'spotify',
         energy: f.energy,
         danceability: f.danceability,
         key: f.key,
@@ -508,8 +551,8 @@ function App() {
   };
 
   const updateDeckBpm = useCallback((deck, bpm) => {
-    if (deck === 'A') setDeckA(prev => prev ? { ...prev, bpm } : prev);
-    else setDeckB(prev => prev ? { ...prev, bpm } : prev);
+    if (deck === 'A') setDeckA(prev => prev ? { ...prev, bpm, bpmSource: 'tap' } : prev);
+    else setDeckB(prev => prev ? { ...prev, bpm, bpmSource: 'tap' } : prev);
   }, []);
 
   const addToSetlist = (track) => setSetlist(prev => prev.find(t => t.id === track.id) ? prev : [...prev, track]);

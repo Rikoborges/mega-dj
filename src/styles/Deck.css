@@ -17,7 +17,7 @@
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.35em;
-  color: #555;
+  color: #9a9aaa;
 }
 
 /* Empty state */
@@ -28,11 +28,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  color: #2a2a3a;
+  color: #7f7f92;
   text-align: center;
 }
 .deck-vinyl { font-size: 3.5rem; }
-.deck-empty p { font-size: 0.8rem; color: #333; margin: 0; }
+.deck-empty p { font-size: 0.8rem; color: #7f7f92; margin: 0; }
 
 /* Spinning cover */
 .deck-cover {
@@ -61,7 +61,7 @@
 /* Track info */
 .deck-info { text-align: center; }
 .deck-title { font-size: 0.9rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.deck-artist { font-size: 0.78rem; color: #666; margin-top: 0.2rem; }
+.deck-artist { font-size: 0.78rem; color: #9a9aaa; margin-top: 0.2rem; }
 
 /* Stats row (BPM + Key) */
 .deck-stats { display: flex; align-items: center; justify-content: center; gap: 1rem; }
@@ -70,17 +70,17 @@
 .deck-bpm { display: flex; align-items: baseline; gap: 0.4rem; justify-content: center; }
 .bpm-value { font-size: 2.1rem; font-weight: 900; font-variant-numeric: tabular-nums; color: #f59e0b; line-height: 1; }
 .deck-B .bpm-value { color: #3b82f6; }
-.bpm-label { font-size: 0.58rem; color: #555; letter-spacing: 0.1em; align-self: flex-end; padding-bottom: 4px; }
+.bpm-label { font-size: 0.66rem; color: #9a9aaa; letter-spacing: 0.1em; align-self: flex-end; padding-bottom: 4px; }
 .deck-energy { font-size: 0.65rem; color: #888; margin-left: 0.3rem; }
 
 /* Key (Camelot) */
 .deck-key { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.key-label { font-size: 0.55rem; color: #555; letter-spacing: 0.1em; font-weight: 700; }
+.key-label { font-size: 0.65rem; color: #9a9aaa; letter-spacing: 0.1em; font-weight: 700; }
 .key-value { font-size: 1.35rem; font-weight: 900; line-height: 1; }
 .key-major { color: #f59e0b; }
 .deck-B .key-major { color: #3b82f6; }
 .key-minor { color: #a78bfa; }
-.key-name { font-size: 0.55rem; color: #555; text-align: center; }
+.key-name { font-size: 0.65rem; color: #9a9aaa; text-align: center; }
 
 /* Waveform */
 .waveform { display: flex; align-items: center; justify-content: center; gap: 2px; height: 28px; }
@@ -97,9 +97,9 @@
 .tap-btn {
   padding: 0.28rem 0.65rem;
   background: #111; border: 1px solid #222;
-  border-radius: 6px; color: #555;
+  border-radius: 6px; color: #9a9aaa;
   font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em;
-  cursor: pointer; transition: all 0.1s; user-select: none;
+  cursor: pointer; transition: background-color 0.1s, color 0.1s, border-color 0.1s, transform 0.1s, opacity 0.1s; user-select: none;
 }
 .tap-btn:active { transform: scale(0.93); }
 .tap-btn.tap-active { border-color: #f59e0b; color: #f59e0b; }
@@ -123,7 +123,7 @@
 .deck-B .deck-play-btn.active { box-shadow: 0 0 18px rgba(59,130,246,0.5); }
 .deck-play-btn:disabled { opacity: 0.35; cursor: default; }
 
-.deck-no-player { text-align: center; font-size: 0.7rem; color: #333; }
+.deck-no-player { text-align: center; font-size: 0.7rem; color: #7f7f92; }
 .deck-spotify-btn {
   display: inline-block; padding: 0.5rem 1.25rem;
   background: #1DB954; color: #fff; border-radius: 999px;
@@ -137,7 +137,7 @@
   background: #141420; color: #888;
   border: 1px solid #222; border-radius: 6px;
   font-size: 0.72rem; cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, opacity 0.15s;
 }
 .deck-action:hover { background: #1e1e30; color: #ccc; }
 .deck-action.highlight { color: #f59e0b; border-color: #3a2e0a; }
@@ -158,3 +158,6 @@
   .bpm-value { font-size: 1.8rem; }
   .deck-play-btn { width: 44px; height: 44px; font-size: 1rem; }
 }
+
+/* BPM ainda não confirmado (só estimado pelo gênero) */
+.bpm-estimated { opacity: 0.6; font-style: italic; }

@@ -1,5 +1,6 @@
 .dj-dashboard {
   min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
   background: #080810;
   padding: 1rem;
   display: flex;
@@ -10,7 +11,7 @@
 /* ── Desktop (> 1100px) ─────────────────────────────────────── */
 .decks-row {
   display: grid;
-  grid-template-columns: 1fr 160px 1fr;
+  grid-template-columns: 1fr 180px 1fr;
   gap: 1rem;
   align-items: start;
 }

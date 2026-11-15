@@ -17,7 +17,7 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
-.library-heading { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.35em; color: #444; }
+.library-heading { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.35em; color: #7f7f92; }
 
 .library-search { display: flex; gap: 0.4rem; flex: 1; max-width: 320px; }
 .library-search input {
@@ -39,8 +39,8 @@
 .lib-tab {
   flex: 1; padding: 0.45rem 0.5rem;
   background: transparent; border: none; border-bottom: 2px solid transparent;
-  color: #444; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em;
-  cursor: pointer; transition: all 0.15s; text-transform: uppercase;
+  color: #7f7f92; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em;
+  cursor: pointer; transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, opacity 0.15s; text-transform: uppercase;
 }
 .lib-tab:hover { color: #888; }
 .lib-tab-active { color: #f59e0b; border-bottom-color: #f59e0b; }
@@ -52,7 +52,7 @@
 .genre-chip {
   padding: 0.22rem 0.65rem; background: #141420; border: 1px solid #1e1e2e;
   border-radius: 999px; color: #777; font-size: 0.72rem; cursor: pointer;
-  transition: all 0.15s; font-weight: 600;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, opacity 0.15s; font-weight: 600;
 }
 .genre-chip:hover { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
@@ -66,7 +66,7 @@
 }
 .radio-group { display: flex; flex-direction: column; gap: 0.3rem; }
 .radio-region-label {
-  font-size: 0.58rem; font-weight: 800; letter-spacing: 0.2em;
+  font-size: 0.66rem; font-weight: 800; letter-spacing: 0.2em;
   color: #2e2e42; text-transform: uppercase;
 }
 .radio-chips { display: flex; flex-wrap: wrap; gap: 0.28rem; }
@@ -79,7 +79,7 @@
 
 .library-list { overflow-y: auto; flex: 1; }
 
-.library-state { padding: 2rem 1.5rem; text-align: center; color: #333; font-size: 0.85rem; line-height: 1.7; }
+.library-state { padding: 2rem 1.5rem; text-align: center; color: #7f7f92; font-size: 0.85rem; line-height: 1.7; }
 .library-state small { font-size: 0.72rem; color: #252535; }
 
 .lib-track {
@@ -91,18 +91,18 @@
 .lib-img { width: 42px; height: 42px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
 .lib-info { flex: 1; min-width: 0; }
 .lib-title { font-size: 0.82rem; font-weight: 600; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lib-artist { font-size: 0.72rem; color: #555; margin-top: 1px; }
+.lib-artist { font-size: 0.72rem; color: #9a9aaa; margin-top: 1px; }
 .lib-bpm { font-size: 0.68rem; color: #f59e0b; font-weight: 700; margin-top: 2px; }
 .lib-pop { color: #888; font-weight: 400; }
 .hist-deck { color: #f59e0b; font-weight: 700; font-size: 0.65rem; }
-.hist-time { color: #444; }
-.lib-no-preview { color: #333; font-weight: 400; }
+.hist-time { color: #7f7f92; }
+.lib-no-preview { color: #7f7f92; font-weight: 400; }
 
 .lib-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
 .lib-actions button {
   width: 28px; height: 28px; border: 1px solid #222; border-radius: 5px;
   background: #141420; color: #888; font-size: 0.75rem; cursor: pointer;
-  font-weight: 700; transition: all 0.12s;
+  font-weight: 700; transition: background-color 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, opacity 0.12s;
 }
 .lib-actions button:hover { background: #f59e0b; color: #000; border-color: #f59e0b; }
 .lib-actions button:last-child:hover { background: #22c55e; border-color: #22c55e; }
