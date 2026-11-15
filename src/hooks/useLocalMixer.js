@@ -1,5 +1,8 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { ANALYSIS_RATE, toMono, computePeaks, detectBpm, matchOctave } from '../audio/analyze';
+import {
+  ANALYSIS_RATE, toMono, computePeaks, detectBpm, matchOctave,
+  detectBeatOffset, nearestBeat, beatPhase, phaseDiff,
+} from '../audio/analyze';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MOTOR DE ÁUDIO — a "mesa de som" feita com a Web Audio API
@@ -43,7 +46,15 @@ const EMPTY_DECK = {
   pitch: 0,                              // % de velocidade (+2 = 2% mais rápido)
   pitchRange: 8,                         // ±8% ou ±16%, como nos CDJs
   keyLock: true,                         // muda a velocidade sem mudar o tom
+  // ── Etapa 4 ──
+  beatOffset: 0,                         // segundo em que cai a 1ª batida (beat grid)
+  cues: [null, null, null, null],        // 4 hot cues (tempo em segundos)
+  loop: null,                            // { start, end, beats } ou null
+  quantize: true,                        // cue e loop "grudam" na batida
 };
+
+export const HOT_CUES = 4;
+export const LOOP_SIZES = [1, 2, 4, 8];
 
 // BPM que está tocando agora (BPM original × velocidade do pitch)
 export const effectiveBpm = (deck) =>
@@ -122,10 +133,27 @@ async function analyzeFile(file) {
   const channels = [];
   for (let c = 0; c < audio.numberOfChannels; c++) channels.push(audio.getChannelData(c));
   const mono = toMono(channels);
+  const bpm = detectBpm(mono, audio.sampleRate);
   return {
     peaks: computePeaks(mono, 1200),
-    bpm: detectBpm(mono, audio.sampleRate),
+    bpm,
+    beatOffset: bpm ? detectBeatOffset(mono, audio.sampleRate, bpm) : 0,
   };
+}
+
+// Com QUANTIZE ligado e grade detectada, o tempo "gruda" na batida mais próxima
+const snap = (deck, t) =>
+  deck.quantize && deck.bpm ? nearestBeat(t, deck.bpm, deck.beatOffset) : t;
+
+// Quanto (em segundos da música) o deck "me" precisa andar para o bumbo cair
+// junto com o do deck "other". Positivo = precisa adiantar. null = sem grade.
+function phaseShift(me, other, myTime, otherTime) {
+  const target = effectiveBpm(other);
+  if (!me.bpm || !target) return null;
+  const base = matchOctave(me.bpm, target); // trata 87 e 174 como compatíveis
+  const myPhase = beatPhase(myTime, base, me.beatOffset);
+  const otherPhase = beatPhase(otherTime, other.bpm, other.beatOffset);
+  return phaseDiff(otherPhase, myPhase) * (60 / base); // caminho mais curto
 }
 
 // Lê o volume de um AnalyserNode e devolve 0..1 para desenhar o VU
@@ -286,6 +314,9 @@ export function useLocalMixer() {
       bpm: null,
       peaks: null,
       pitch: 0,
+      beatOffset: 0,
+      cues: [null, null, null, null],
+      loop: null,
     });
 
     // Analisa em segundo plano: a música já pode tocar enquanto isso.
@@ -293,8 +324,8 @@ export function useLocalMixer() {
     // antes de a análise terminar, o resultado antigo não pode sobrescrever o novo.
     const loadId = ++loadIdRef.current[id];
     analyzeFile(file)
-      .then(({ peaks, bpm }) => {
-        if (loadIdRef.current[id] === loadId) patchDeck(id, { peaks, bpm, analyzing: false });
+      .then(({ peaks, bpm, beatOffset }) => {
+        if (loadIdRef.current[id] === loadId) patchDeck(id, { peaks, bpm, beatOffset, analyzing: false });
       })
       .catch(() => {
         if (loadIdRef.current[id] === loadId) patchDeck(id, { analyzing: false });
@@ -314,8 +345,11 @@ export function useLocalMixer() {
   const seek = useCallback((id, seconds) => {
     const el = audioRef.current[id];
     if (!el?.src || !Number.isFinite(seconds)) return;
+    const loop = decksRef.current[id].loop;
+    // Pulou para fora do loop? Então sai do loop (senão ele puxaria de volta)
+    const leaveLoop = loop && (seconds < loop.start || seconds >= loop.end);
     el.currentTime = seconds;
-    patchDeck(id, { currentTime: seconds });
+    patchDeck(id, leaveLoop ? { currentTime: seconds, loop: null } : { currentTime: seconds });
   }, [patchDeck]);
 
   // ── Controles do canal ────────────────────────────────────────────────────
@@ -368,6 +402,32 @@ export function useLocalMixer() {
     applyRate(audioRef.current[id], decksRef.current[id], bendRef.current[id]);
   }, []);
 
+  // Ajuste fino de fase sem pular (até `tries` rodadas)
+  const fineAlign = useCallback((id, tries) => {
+    const otherId = id === 'A' ? 'B' : 'A';
+    setTimeout(() => {                       // espera o último pulo "assentar"
+      const myEl = audioRef.current[id];
+      const otherEl = audioRef.current[otherId];
+      if (!myEl || !otherEl || myEl.paused || otherEl.paused) return;
+      const me = decksRef.current[id];
+      const r = phaseShift(me, decksRef.current[otherId], myEl.currentTime, otherEl.currentTime);
+      if (r == null || Math.abs(r) < 0.004 || tries <= 0) return; // < 4 ms: já está ótimo
+
+      // Quanto acelerar para andar "r" a mais em D segundos:
+      //   velocidade × (bend − 1) × D = r   →   bend = 1 + r / (velocidade × D)
+      const D = 0.4;
+      const speed = 1 + me.pitch / 100;
+      const bend = Math.max(0.85, Math.min(1.15, 1 + r / (speed * D)));
+      bendRef.current[id] = bend;
+      applyRate(myEl, me, bend);
+      setTimeout(() => {
+        bendRef.current[id] = 1;
+        applyRate(audioRef.current[id], decksRef.current[id], 1);
+        fineAlign(id, tries - 1);            // confere de novo
+      }, D * 1000);
+    }, 250);
+  }, []);
+
   // SYNC: ajusta o pitch deste deck para o BPM ficar igual ao do outro.
   // Obs.: iguala a VELOCIDADE; alinhar as batidas no tempo é com o nudge.
   const sync = useCallback((id) => {
@@ -384,8 +444,107 @@ export function useLocalMixer() {
     }
     const pitchRange = Math.abs(pct) > 8 ? 16 : me.pitchRange;
     patchDeck(id, { pitchRange, pitch: Math.round(pct * 100) / 100 });
+
+    // Sync de FASE (se o outro deck está tocando): faz o bumbo cair junto.
+    //   1º passo: um PULO para chegar perto.
+    //   2º passo: ajuste fino SEM pular. Todo pulo no <audio> tem um "engasgo"
+    //   de dezenas de ms (medido: ~70 ms, até ~100 ms com key lock), então
+    //   pular de novo nunca acerta. Em vez disso, acelera/freia um pouquinho
+    //   por 0.4s até encaixar — é o nudge que o DJ faz na mão, só que automático.
+    const otherId = id === 'A' ? 'B' : 'A';
+    const myEl = audioRef.current[id];
+    const otherEl = audioRef.current[otherId];
+    if (otherEl && !otherEl.paused && myEl?.src) {
+      const shift = phaseShift(me, other, myEl.currentTime, otherEl.currentTime);
+      const newPitch = Math.round(pct * 100) / 100;
+      if (newPitch === 0) {
+        // Velocidade exatamente 1: o navegador toca direto, sem o "esticador"
+        // do key lock, e o pulo cai certinho (medido: 0 ms). Mexer na velocidade
+        // aqui ligaria/desligaria o esticador e criaria o engasgo — então só pula.
+        if (shift != null && Math.abs(shift) > 0.002) myEl.currentTime = Math.max(0, myEl.currentTime + shift);
+      } else {
+        if (shift != null && Math.abs(shift) > 0.06) myEl.currentTime = Math.max(0, myEl.currentTime + shift);
+        fineAlign(id, 3);
+      }
+    }
+    return { ok: true };
+  }, [patchDeck, fineAlign]);
+
+  // ── Etapa 4: quantize, hot cues, loops ────────────────────────────────────
+  const toggleQuantize = useCallback((id) => {
+    patchDeck(id, { quantize: !decksRef.current[id].quantize });
+  }, [patchDeck]);
+
+  // Hot cue vazio → grava a posição. Hot cue gravado → pula para ele e toca.
+  const hotCue = useCallback((id, i) => {
+    const el = audioRef.current[id];
+    const deck = decksRef.current[id];
+    if (!el?.src) return;
+    const cue = deck.cues[i];
+    if (cue == null) {
+      const cues = [...deck.cues];
+      cues[i] = snap(deck, el.currentTime);
+      patchDeck(id, { cues });
+    } else {
+      seek(id, cue);
+      if (el.paused) { ensureContext(); el.play().catch(() => {}); }
+    }
+  }, [patchDeck, seek, ensureContext]);
+
+  const clearCue = useCallback((id, i) => {
+    const cues = [...decksRef.current[id].cues];
+    cues[i] = null;
+    patchDeck(id, { cues });
+  }, [patchDeck]);
+
+  // Loop de N batidas a partir da batida atual. Apertar o mesmo de novo = sair.
+  const toggleLoop = useCallback((id, beats) => {
+    const el = audioRef.current[id];
+    const deck = decksRef.current[id];
+    if (!el?.src) return { ok: false };
+    if (deck.loop && deck.loop.beats === beats) {
+      patchDeck(id, { loop: null });
+      return { ok: true };
+    }
+    if (!deck.bpm) return { ok: false, error: 'O loop precisa do BPM detectado para saber o tamanho da batida.' };
+    // Se já está num loop e muda o tamanho, mantém o mesmo começo (igual CDJ)
+    const start = deck.loop ? deck.loop.start : snap(deck, el.currentTime);
+    patchDeck(id, { loop: { start, end: start + beats * (60 / deck.bpm), beats } });
     return { ok: true };
   }, [patchDeck]);
+
+  // Vigia dos loops: 60x por segundo confere se algum deck passou do fim do
+  // loop e, se passou, volta para o começo + o que passou (para não "comer" tempo).
+  // Fica num efeito separado e lê decksRef, então não reinicia a cada render.
+  useEffect(() => {
+    let frame;
+    const tick = () => {
+      DECKS.forEach(id => {
+        const loop = decksRef.current[id].loop;
+        const el = audioRef.current[id];
+        if (!loop || !el || el.paused) return;
+        if (el.currentTime >= loop.end) {
+          const over = (el.currentTime - loop.end) % (loop.end - loop.start);
+          el.currentTime = loop.start + over;
+        }
+      });
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  // Fase da batida agora (para o medidor de fase do mixer, a 60 fps)
+  const getPhase = useCallback((id) => {
+    const deck = decksRef.current[id];
+    const el = audioRef.current[id];
+    if (!deck.bpm || !el?.src) return null;
+    return {
+      phase: beatPhase(el.currentTime, deck.bpm, deck.beatOffset),
+      beatSec: 60 / effectiveBpm(deck), // duração de 1 batida no tempo real (com pitch)
+      playing: !el.paused,
+    };
+  }, []);
 
   // Posição atual em segundos (para a forma de onda desenhar a 60 fps, fora do React)
   const getTime = useCallback((id) => audioRef.current[id]?.currentTime || 0, []);
@@ -403,6 +562,7 @@ export function useLocalMixer() {
     load, toggle, seek,
     setFader, setTrim, setEq, toggleKill, setFilter, setCrossfader,
     setPitch, togglePitchRange, toggleKeyLock, nudge, sync,
-    getLevel, getTime,
+    toggleQuantize, hotCue, clearCue, toggleLoop,
+    getLevel, getTime, getPhase,
   };
 }

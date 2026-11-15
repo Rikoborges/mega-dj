@@ -11,7 +11,12 @@ import React, { useEffect, useRef } from 'react';
 // Clicar ou arrastar na onda pula para aquele ponto da música.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function Waveform({ peaks, duration, getTime, onSeek, color, analyzing }) {
+export const CUE_COLORS = ['#ef4444', '#22c55e', '#a855f7', '#06b6d4'];
+
+export default function Waveform({
+  peaks, duration, getTime, onSeek, color, analyzing,
+  bpm, beatOffset = 0, cues = [], loop = null,
+}) {
   const canvasRef = useRef(null);
   const baseRef = useRef(null);       // canvas fora da tela com a onda pronta
   const draggingRef = useRef(false);
@@ -46,6 +51,36 @@ export default function Waveform({ peaks, duration, getTime, onSeek, color, anal
           const ph = Math.max(1, peaks[i] * (h * 0.9));
           b.fillRect(i * barW, mid - ph / 2, Math.max(1, barW - 0.3), ph);
         }
+      }
+      if (duration > 0) {
+        const xOf = (t) => (t / duration) * w;
+
+        // Grade: uma linha a cada compasso (4 batidas). Só desenha se couber,
+        // senão vira um borrão de linhas numa música longa.
+        if (bpm) {
+          const bar = (60 / bpm) * 4;
+          if ((bar / duration) * w >= 4 * dpr) {
+            b.fillStyle = 'rgba(255,255,255,0.12)';
+            for (let t = beatOffset; t < duration; t += bar) b.fillRect(Math.round(xOf(t)), 0, 1, h);
+          }
+        }
+
+        // Região do loop
+        if (loop) {
+          b.fillStyle = 'rgba(34,197,94,0.22)';
+          b.fillRect(xOf(loop.start), 0, Math.max(2, xOf(loop.end) - xOf(loop.start)), h);
+        }
+
+        // Hot cues: linha + triangulozinho em cima, na cor do pad
+        cues.forEach((cue, i) => {
+          if (cue == null) return;
+          const x = Math.round(xOf(cue));
+          b.fillStyle = CUE_COLORS[i];
+          b.fillRect(x, 0, Math.max(1, dpr), h);
+          b.beginPath();
+          b.moveTo(x - 5 * dpr, 0); b.lineTo(x + 5 * dpr, 0); b.lineTo(x, 7 * dpr);
+          b.fill();
+        });
       }
       baseRef.current = base;
     };
@@ -85,7 +120,7 @@ export default function Waveform({ peaks, duration, getTime, onSeek, color, anal
       cancelAnimationFrame(frame);
       ro.disconnect();
     };
-  }, [peaks, duration, color]);
+  }, [peaks, duration, color, bpm, beatOffset, cues, loop]);
 
   // Clique/arraste para pular na música
   const seekFromPointer = (e) => {

@@ -50,9 +50,8 @@ export function computePeaks(samples, bins = 1000) {
 //   3. Onsets: só os AUMENTOS de energia (o "ataque" de cada batida)
 //   4. Autocorrelação: compara a curva com ela mesma atrasada. O atraso que mais
 //      "encaixa" é o intervalo entre batidas → BPM = 60 / intervalo
-export function detectBpm(samples, sampleRate, { min = 70, max = 180 } = {}) {
-  if (!samples || samples.length < sampleRate * 4) return null; // menos de 4s: pouco para medir
-
+// Passos 1 a 3 viram uma função separada, porque o beat grid também usa
+export function onsetEnvelope(samples, sampleRate) {
   // 1. Passa-baixa simples de 1 polo (~150 Hz)
   const cutoff = 150;
   const alpha = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
@@ -81,10 +80,19 @@ export function detectBpm(samples, sampleRate, { min = 70, max = 180 } = {}) {
     mean += onset[f];
   }
   mean /= frames;
-  for (let f = 0; f < frames; f++) onset[f] -= mean; // tira a média para a autocorrelação funcionar bem
+  return { onset, mean, fps: sampleRate / hop };
+}
+
+export function detectBpm(samples, sampleRate, { min = 70, max = 180 } = {}) {
+  if (!samples || samples.length < sampleRate * 4) return null; // menos de 4s: pouco para medir
+
+  const { onset: raw, mean, fps } = onsetEnvelope(samples, sampleRate);
+  const frames = raw.length;
+  // Tira a média para a autocorrelação funcionar bem
+  const onset = new Float32Array(frames);
+  for (let f = 0; f < frames; f++) onset[f] = raw[f] - mean;
 
   // 4. Autocorrelação entre os atrasos que correspondem a min..max BPM
-  const fps = sampleRate / hop;
   const minLag = Math.floor((60 / max) * fps);
   const maxLag = Math.ceil((60 / min) * fps);
   const corr = new Float32Array(maxLag + 2);
@@ -120,4 +128,48 @@ export function detectBpm(samples, sampleRate, { min = 70, max = 180 } = {}) {
 export function matchOctave(bpm, target) {
   const options = [bpm / 2, bpm, bpm * 2];
   return options.reduce((best, b) => (Math.abs(b - target) < Math.abs(best - target) ? b : best));
+}
+
+// ── BEAT GRID ────────────────────────────────────────────────────────────────
+// O BPM diz a DISTÂNCIA entre as batidas; falta saber ONDE elas caem.
+// Testamos cada "deslocamento" possível dentro de uma batida e somamos a força
+// dos ataques em offset, offset + 1 batida, offset + 2 batidas, ... O offset
+// em que a soma é maior é onde o bumbo bate. Resultado em segundos.
+export function detectBeatOffset(samples, sampleRate, bpm) {
+  if (!bpm || !samples || samples.length < sampleRate * 4) return 0;
+  const { onset, fps } = onsetEnvelope(samples, sampleRate);
+  const period = (60 / bpm) * fps; // batida em "janelas" (pode ser quebrado, ex.: 93.75)
+
+  let bestPhase = 0, bestSum = -Infinity;
+  const steps = Math.ceil(period);
+  for (let ph = 0; ph < steps; ph++) {
+    let sum = 0;
+    for (let pos = ph; pos < onset.length - 1; pos += period) {
+      // interpola entre duas janelas, porque a batida cai "no meio" delas
+      const i = Math.floor(pos), frac = pos - i;
+      sum += onset[i] * (1 - frac) + onset[i + 1] * frac;
+    }
+    if (sum > bestSum) { bestSum = sum; bestPhase = ph; }
+  }
+  return bestPhase / fps;
+}
+
+// ── Contas da grade (usadas por cue, loop e sync) ───────────────────────────
+// Batida mais próxima de um tempo t (em segundos da música)
+export function nearestBeat(t, bpm, offset) {
+  const p = 60 / bpm;
+  return Math.max(0, offset + Math.round((t - offset) / p) * p);
+}
+
+// Em que ponto da batida estamos: 0 = em cima da batida, 0.5 = no meio
+export function beatPhase(t, bpm, offset) {
+  const x = (t - offset) / (60 / bpm);
+  return x - Math.floor(x);
+}
+
+// Diferença de fase entre -0.5 e +0.5 (o caminho mais curto para alinhar)
+export function phaseDiff(a, b) {
+  let d = a - b;
+  d -= Math.round(d);
+  return d;
 }

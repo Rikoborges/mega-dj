@@ -3,6 +3,7 @@ import { useLocalMixer, effectiveBpm } from '../hooks/useLocalMixer';
 import LocalDeck from './LocalDeck';
 import ChannelStrip from './ChannelStrip';
 import VuMeter from './VuMeter';
+import PhaseMeter from './PhaseMeter';
 import '../styles/LocalDJ.css';
 
 export default function LocalDJ() {
@@ -10,6 +11,7 @@ export default function LocalDJ() {
     decks, crossfader, load, toggle, seek,
     setFader, setTrim, setEq, toggleKill, setFilter, setCrossfader, getLevel,
     setPitch, togglePitchRange, toggleKeyLock, nudge, sync, getTime,
+    toggleQuantize, hotCue, clearCue, toggleLoop, getPhase,
   } = useLocalMixer();
 
   const deckProps = (id) => ({
@@ -26,6 +28,13 @@ export default function LocalDJ() {
     onSync:       () => {
       const r = sync(id);
       setError(r.ok ? '' : r.error);
+    },
+    onQuantize:   () => toggleQuantize(id),
+    onHotCue:     (i) => hotCue(id, i),
+    onClearCue:   (i) => clearCue(id, i),
+    onLoop:       (n) => {
+      const r = toggleLoop(id, n);
+      if (r.error) setError(r.error);
     },
   });
 
@@ -54,17 +63,20 @@ export default function LocalDJ() {
   // Atalhos: Q/W tocam os decks, setas mexem o crossfader
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.closest('input, textarea, select, [contenteditable="true"], [role="slider"]')) return;
+      if (e.target.closest?.('input, textarea, select, [contenteditable="true"], [role="slider"]')) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase();
       if (k === 'q') toggle('A');
       else if (k === 'w') toggle('B');
+      // Hot cues: 1 2 3 4 no deck A, 7 8 9 0 no deck B
+      else if ('1234'.includes(e.key) && e.key.length === 1) hotCue('A', Number(e.key) - 1);
+      else if ('7890'.includes(e.key) && e.key.length === 1) hotCue('B', '7890'.indexOf(e.key));
       else if (e.key === 'ArrowLeft')  { e.preventDefault(); setCrossfader(v => v - 5); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); setCrossfader(v => v + 5); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [toggle, setCrossfader]);
+  }, [toggle, setCrossfader, hotCue]);
 
   return (
     <div className="local-dj">
@@ -88,6 +100,8 @@ export default function LocalDJ() {
             </span>
             <span className="lmix-bpm-b">{bpmB ? bpmB.toFixed(1) : '—'}</span>
           </div>
+
+          <PhaseMeter getPhase={getPhase} />
 
           <div className="lmix-strips">
             <ChannelStrip {...stripProps('A')} />
@@ -118,6 +132,7 @@ export default function LocalDJ() {
 
           <p className="lmix-keys">
             <kbd>Q</kbd> / <kbd>W</kbd> tocar · <kbd>←</kbd> <kbd>→</kbd> crossfader<br />
+            Hot cues: <kbd>1</kbd>–<kbd>4</kbd> deck A · <kbd>7</kbd>–<kbd>0</kbd> deck B<br />
             Knobs: arraste para cima/baixo · duplo clique zera
           </p>
         </section>

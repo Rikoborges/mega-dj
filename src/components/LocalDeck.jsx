@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Waveform from './Waveform';
-import { effectiveBpm } from '../hooks/useLocalMixer';
+import Waveform, { CUE_COLORS } from './Waveform';
+import { effectiveBpm, HOT_CUES, LOOP_SIZES } from '../hooks/useLocalMixer';
 
 const COLORS = { A: '#f59e0b', B: '#3b82f6' };
 
@@ -35,8 +35,10 @@ export default function LocalDeck({
   id, deck, getTime,
   onLoad, onToggle, onSeek,
   onPitch, onPitchRange, onKeyLock, onNudge, onSync,
+  onQuantize, onHotCue, onClearCue, onLoop,
 }) {
   const [dragging, setDragging] = useState(false);
+  const [clearMode, setClearMode] = useState(false); // modo de apagar hot cue
   const inputId = `local-file-${id}`;
   const color = COLORS[id];
 
@@ -99,6 +101,10 @@ export default function LocalDeck({
             onSeek={onSeek}
             color={color}
             analyzing={deck.analyzing}
+            bpm={deck.bpm}
+            beatOffset={deck.beatOffset}
+            cues={deck.cues}
+            loop={deck.loop}
           />
 
           <div className="ldeck-time">
@@ -167,7 +173,85 @@ export default function LocalDeck({
             />
           </div>
 
+          {/* ── Hot cues ── */}
+          <div className="ldeck-perf">
+            <div className="ldeck-perf-head">
+              <span className="ldeck-perf-title">HOT CUE</span>
+              <button
+                className={`ldeck-chip ${deck.quantize ? 'on' : ''}`}
+                onClick={onQuantize}
+                aria-pressed={deck.quantize}
+                title="QUANTIZE: cue e loop grudam na batida mais próxima"
+              >
+                Q
+              </button>
+              <button
+                className={`ldeck-chip ${clearMode ? 'danger' : ''}`}
+                onClick={() => setClearMode(m => !m)}
+                aria-pressed={clearMode}
+                disabled={!deck.cues.some(c => c != null)}
+                title="Ative e toque num pad para apagar o cue"
+              >
+                APAGAR
+              </button>
+            </div>
+            <div className="ldeck-pads">
+              {Array.from({ length: HOT_CUES }, (_, i) => {
+                const cue = deck.cues[i];
+                const filled = cue != null;
+                return (
+                  <button
+                    key={i}
+                    className={`ldeck-pad ${filled ? 'filled' : ''} ${clearMode && filled ? 'to-clear' : ''}`}
+                    style={{ '--cue': CUE_COLORS[i] }}
+                    onClick={() => {
+                      if (clearMode) {
+                        if (filled) onClearCue(i);
+                        // apagou o último? sai do modo apagar sozinho
+                        if (deck.cues.filter(c => c != null).length <= 1) setClearMode(false);
+                      } else {
+                        onHotCue(i);
+                      }
+                    }}
+                    aria-label={
+                      clearMode && filled ? `Apagar hot cue ${i + 1}`
+                        : filled ? `Ir para o hot cue ${i + 1} (${formatTime(cue)})`
+                          : `Gravar hot cue ${i + 1} aqui`
+                    }
+                  >
+                    <span className="ldeck-pad-num">{i + 1}</span>
+                    <span className="ldeck-pad-time">{filled ? formatTime(cue) : '+'}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Loops ── */}
+          <div className="ldeck-perf">
+            <div className="ldeck-perf-head">
+              <span className="ldeck-perf-title">
+                LOOP{deck.loop ? ` · ${deck.loop.beats} batida${deck.loop.beats > 1 ? 's' : ''}` : ''}
+              </span>
+            </div>
+            <div className="ldeck-loops">
+              {LOOP_SIZES.map(n => (
+                <button
+                  key={n}
+                  className={`ldeck-loop ${deck.loop?.beats === n ? 'on' : ''}`}
+                  onClick={() => onLoop(n)}
+                  aria-pressed={deck.loop?.beats === n}
+                  aria-label={deck.loop?.beats === n ? `Sair do loop de ${n}` : `Loop de ${n} batida${n > 1 ? 's' : ''}`}
+                  disabled={!deck.bpm}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* ── Transporte ── */}
+
           <div className="ldeck-transport">
             <HoldButton
               className="ldeck-nudge"

@@ -451,7 +451,7 @@ function App() {
     if (mode !== 'spotify') return; // o modo local tem atalhos próprios
     const onKey = (e) => {
       // Ignora quando está digitando ou usando atalho do navegador (Ctrl+T, Cmd+W…)
-      if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === ' ')                       { e.preventDefault(); if (activeDeck) toggleDeck(activeDeck); }
       else if (e.key === 'q' || e.key === 'Q') toggleDeck('A');
